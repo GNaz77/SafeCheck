@@ -53,11 +53,11 @@ export async function registerRoutes(
         email,
         score,
         status,
-        syntaxValid: data.is_valid_format?.value ?? true,
-        mxRecords: data.is_mx_found?.value ?? false,
-        disposable: data.is_disposable_email?.value ?? false,
-        smtpValid: data.is_smtp_valid?.value ?? false,
-        spamTrap: data.is_catchall_email?.value ?? false,
+        syntaxValid: data.is_valid_format?.value === true,
+        mxRecords: data.is_mx_found?.value === true,
+        disposable: data.is_disposable_email?.value === true,
+        smtpValid: data.is_smtp_valid?.value === true,
+        spamTrap: data.is_catchall_email?.value === true,
         domainAge: estimateDomainAge(data),
         riskLevel,
       };
@@ -107,35 +107,48 @@ export async function registerRoutes(
 }
 
 function calculateScore(data: any): number {
-  let score = 0;
-  
-  if (data.is_valid_format?.value) score += 20;
-  if (data.is_mx_found?.value) score += 25;
-  if (data.is_smtp_valid?.value) score += 30;
-  if (!data.is_disposable_email?.value) score += 15;
-  if (!data.is_catchall_email?.value) score += 10;
-  
-  if (data.quality_score) {
-    score = Math.round(data.quality_score * 100);
+  if (data.quality_score !== undefined && data.quality_score !== null) {
+    return Math.round(parseFloat(data.quality_score) * 100);
   }
+  
+  let score = 50;
+  
+  if (data.is_valid_format?.value === true) score += 15;
+  if (data.is_mx_found?.value === true) score += 15;
+  if (data.is_smtp_valid?.value === true) score += 10;
+  if (data.is_disposable_email?.value === true) score -= 40;
+  if (data.is_catchall_email?.value === true) score -= 10;
+  if (data.is_role_email?.value === true) score -= 5;
+  
+  const breachCount = data.breaches?.length ?? 0;
+  if (breachCount > 50) score -= 20;
+  else if (breachCount > 20) score -= 15;
+  else if (breachCount > 5) score -= 10;
+  else if (breachCount > 0) score -= 5;
   
   return Math.min(100, Math.max(0, score));
 }
 
 function determineStatus(score: number, data: any): "safe" | "risky" | "invalid" {
   if (data.deliverability === "UNDELIVERABLE") return "invalid";
-  if (score >= 70) return "safe";
-  return "risky";
+  if (data.is_disposable_email?.value === true) return "risky";
+  if (score >= 60) return "safe";
+  if (score >= 35) return "risky";
+  return "invalid";
 }
 
 function determineRiskLevel(score: number): "Low" | "Medium" | "High" {
-  if (score >= 70) return "Low";
-  if (score >= 40) return "Medium";
+  if (score >= 60) return "Low";
+  if (score >= 35) return "Medium";
   return "High";
 }
 
 function estimateDomainAge(data: any): string {
-  if (data.is_free_email?.value) return "> 5 years";
-  if (data.is_disposable_email?.value) return "< 1 month";
+  if (data.is_free_email?.value === true) return "> 10 years";
+  if (data.is_disposable_email?.value === true) return "< 1 month";
+  
+  const breachCount = data.breaches?.length ?? 0;
+  if (breachCount > 20) return "> 5 years";
+  if (breachCount > 5) return "2-5 years";
   return "1-5 years";
 }
