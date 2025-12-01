@@ -149,7 +149,6 @@ export default function Home() {
     setResult(null);
     setProgress(0);
 
-    // Simulate scanning progress
     const interval = setInterval(() => {
       setProgress((prev) => {
         if (prev >= 90) return prev;
@@ -157,68 +156,42 @@ export default function Home() {
       });
     }, 200);
 
-    // Mock API delay
-    await new Promise((resolve) => setTimeout(resolve, 2000));
-    
-    clearInterval(interval);
-    setProgress(100);
-
-    // Mock logic for demo purposes
-    const isTest = values.email.includes("test");
-    const isGmail = values.email.includes("gmail");
-    const isTemp = values.email.includes("temp") || values.email.includes("10min");
-
-    let mockResult: ScanResult = {
-      score: 95,
-      status: "safe",
-      details: {
-        syntax: true,
-        mxRecords: true,
-        disposable: false,
-        smtp: true,
-        spamTrap: false,
-        domainAge: "> 5 years",
-      },
-      riskLevel: "Low",
-    };
-
-    if (isTest || isTemp) {
-      mockResult = {
-        score: 15,
-        status: "risky",
-        details: {
-          syntax: true,
-          mxRecords: true,
-          disposable: true,
-          smtp: false,
-          spamTrap: isTest, // artificially make test emails spam traps
-          domainAge: "< 1 month",
+    try {
+      const response = await fetch("/api/verify-email", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
         },
-        riskLevel: "High",
-      };
-    } else if (!isGmail && Math.random() > 0.7) {
-       // Random medium risk for non-gmail
-       mockResult = {
-        score: 65,
-        status: "risky",
-        details: {
-          syntax: true,
-          mxRecords: true,
-          disposable: false,
-          smtp: true,
-          spamTrap: false,
-          domainAge: "1 year",
-        },
-        riskLevel: "Medium",
-      };
+        body: JSON.stringify({ email: values.email }),
+      });
+
+      clearInterval(interval);
+      setProgress(100);
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to verify email");
+      }
+
+      const data: ScanResult = await response.json();
+      setResult(data);
+      
+      toast({
+        title: "Scan Complete",
+        description: `Email analysis finished for ${values.email}`,
+      });
+    } catch (error) {
+      clearInterval(interval);
+      setIsScanning(false);
+      
+      toast({
+        title: "Verification Failed",
+        description: error instanceof Error ? error.message : "Unable to verify email. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsScanning(false);
     }
-
-    setResult(mockResult);
-    setIsScanning(false);
-    toast({
-      title: "Scan Complete",
-      description: `Email analysis finished for ${values.email}`,
-    });
   };
 
   return (
