@@ -19,24 +19,37 @@ export async function registerRoutes(
       
       const apiKey = process.env.ABSTRACTAPI_KEY;
       if (!apiKey) {
+        console.error("ABSTRACTAPI_KEY not found in environment");
         return res.status(500).json({ error: "Email verification service not configured" });
       }
 
-      const response = await fetch(
-        `https://emailvalidation.abstractapi.com/v1/?api_key=${apiKey}&email=${encodeURIComponent(email)}`
-      );
+      const apiUrl = `https://emailvalidation.abstractapi.com/v1/?api_key=${apiKey}&email=${encodeURIComponent(email)}`;
+      console.log("Calling AbstractAPI for email:", email);
+      
+      const response = await fetch(apiUrl);
+      const responseText = await response.text();
+      
+      console.log("AbstractAPI response status:", response.status);
+      console.log("AbstractAPI response:", responseText);
 
       if (!response.ok) {
-        throw new Error("Failed to verify email");
+        console.error("AbstractAPI error response:", responseText);
+        return res.status(500).json({ error: "Email verification service error" });
       }
 
-      const data = await response.json();
+      let data;
+      try {
+        data = JSON.parse(responseText);
+      } catch (e) {
+        console.error("Failed to parse API response:", responseText);
+        return res.status(500).json({ error: "Invalid response from verification service" });
+      }
       
       const score = calculateScore(data);
       const status = determineStatus(score, data);
       const riskLevel = determineRiskLevel(score);
 
-      const verification = await storage.createVerification({
+      const verificationData = {
         email,
         score,
         status,
@@ -47,20 +60,26 @@ export async function registerRoutes(
         spamTrap: data.is_catchall_email?.value ?? false,
         domainAge: estimateDomainAge(data),
         riskLevel,
-      });
+      };
+
+      try {
+        await storage.createVerification(verificationData);
+      } catch (dbError) {
+        console.error("Database error (non-blocking):", dbError);
+      }
 
       const result = {
-        score: verification.score,
-        status: verification.status,
+        score: verificationData.score,
+        status: verificationData.status,
         details: {
-          syntax: verification.syntaxValid,
-          mxRecords: verification.mxRecords,
-          disposable: verification.disposable,
-          smtp: verification.smtpValid,
-          spamTrap: verification.spamTrap,
-          domainAge: verification.domainAge,
+          syntax: verificationData.syntaxValid,
+          mxRecords: verificationData.mxRecords,
+          disposable: verificationData.disposable,
+          smtp: verificationData.smtpValid,
+          spamTrap: verificationData.spamTrap,
+          domainAge: verificationData.domainAge,
         },
-        riskLevel: verification.riskLevel,
+        riskLevel: verificationData.riskLevel,
       };
 
       return res.json(result);
