@@ -53,11 +53,11 @@ export async function registerRoutes(
         email,
         score,
         status,
-        syntaxValid: data.is_valid_format?.value === true,
-        mxRecords: data.is_mx_found?.value === true,
-        disposable: data.is_disposable_email?.value === true,
-        smtpValid: data.is_smtp_valid?.value === true,
-        spamTrap: data.is_catchall_email?.value === true,
+        syntaxValid: data.email_deliverability?.is_format_valid === true,
+        mxRecords: data.email_deliverability?.is_mx_valid === true,
+        disposable: data.email_quality?.is_disposable === true,
+        smtpValid: data.email_deliverability?.is_smtp_valid === true,
+        spamTrap: data.email_quality?.is_catchall === true,
         domainAge: estimateDomainAge(data),
         riskLevel,
       };
@@ -107,48 +107,58 @@ export async function registerRoutes(
 }
 
 function calculateScore(data: any): number {
-  if (data.quality_score !== undefined && data.quality_score !== null) {
-    return Math.round(parseFloat(data.quality_score) * 100);
+  const qualityScore = data.email_quality?.score;
+  if (qualityScore !== undefined && qualityScore !== null) {
+    return Math.round(parseFloat(qualityScore) * 100);
   }
   
   let score = 50;
   
-  if (data.is_valid_format?.value === true) score += 15;
-  if (data.is_mx_found?.value === true) score += 15;
-  if (data.is_smtp_valid?.value === true) score += 10;
-  if (data.is_disposable_email?.value === true) score -= 40;
-  if (data.is_catchall_email?.value === true) score -= 10;
-  if (data.is_role_email?.value === true) score -= 5;
+  if (data.email_deliverability?.is_format_valid === true) score += 15;
+  if (data.email_deliverability?.is_mx_valid === true) score += 15;
+  if (data.email_deliverability?.is_smtp_valid === true) score += 15;
+  if (data.email_quality?.is_disposable === true) score -= 50;
+  if (data.email_quality?.is_catchall === true) score -= 10;
+  if (data.email_quality?.is_role === true) score -= 5;
   
-  const breachCount = data.breaches?.length ?? 0;
-  if (breachCount > 50) score -= 20;
-  else if (breachCount > 20) score -= 15;
-  else if (breachCount > 5) score -= 10;
-  else if (breachCount > 0) score -= 5;
+  if (data.email_risk?.address_risk_status === "high") score -= 20;
+  else if (data.email_risk?.address_risk_status === "medium") score -= 10;
+  
+  const breachCount = data.email_breaches?.total_breaches ?? 0;
+  if (breachCount > 50) score -= 15;
+  else if (breachCount > 20) score -= 10;
+  else if (breachCount > 5) score -= 5;
   
   return Math.min(100, Math.max(0, score));
 }
 
 function determineStatus(score: number, data: any): "safe" | "risky" | "invalid" {
-  if (data.deliverability === "UNDELIVERABLE") return "invalid";
-  if (data.is_disposable_email?.value === true) return "risky";
-  if (score >= 60) return "safe";
-  if (score >= 35) return "risky";
+  if (data.email_deliverability?.status === "undeliverable") return "invalid";
+  if (data.email_quality?.is_disposable === true) return "risky";
+  if (data.email_risk?.address_risk_status === "high") return "risky";
+  if (score >= 70) return "safe";
+  if (score >= 40) return "risky";
   return "invalid";
 }
 
 function determineRiskLevel(score: number): "Low" | "Medium" | "High" {
-  if (score >= 60) return "Low";
-  if (score >= 35) return "Medium";
+  if (score >= 70) return "Low";
+  if (score >= 40) return "Medium";
   return "High";
 }
 
 function estimateDomainAge(data: any): string {
-  if (data.is_free_email?.value === true) return "> 10 years";
-  if (data.is_disposable_email?.value === true) return "< 1 month";
+  const domainAgeDays = data.email_domain?.domain_age;
+  if (domainAgeDays) {
+    const years = Math.floor(domainAgeDays / 365);
+    if (years >= 10) return "> 10 years";
+    if (years >= 5) return "5-10 years";
+    if (years >= 2) return "2-5 years";
+    if (years >= 1) return "1-2 years";
+    return "< 1 year";
+  }
   
-  const breachCount = data.breaches?.length ?? 0;
-  if (breachCount > 20) return "> 5 years";
-  if (breachCount > 5) return "2-5 years";
-  return "1-5 years";
+  if (data.email_quality?.is_free_email === true) return "> 10 years";
+  if (data.email_quality?.is_disposable === true) return "< 1 month";
+  return "Unknown";
 }
