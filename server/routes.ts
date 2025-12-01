@@ -23,7 +23,7 @@ export async function registerRoutes(
         return res.status(500).json({ error: "Email verification service not configured" });
       }
 
-      const apiUrl = `https://emailvalidation.abstractapi.com/v1/?api_key=${apiKey}&email=${encodeURIComponent(email)}`;
+      const apiUrl = `https://emailreputation.abstractapi.com/v1/?api_key=${apiKey}&email=${encodeURIComponent(email)}`;
       console.log("Calling AbstractAPI for email:", email);
       
       const response = await fetch(apiUrl);
