@@ -1,8 +1,8 @@
-# EmailGuard - Email Verification Application
+# SafeCheck - Email Verification Application
 
 ## Overview
 
-EmailGuard is a web application that verifies email legitimacy and provides safety scores. It's built as a full-stack TypeScript application with a React frontend and Express backend, using PostgreSQL for data persistence. The application integrates with AbstractAPI's Email Reputation service to analyze email addresses and provide detailed verification results including syntax validation, MX records, disposable email detection, SMTP validation, spam trap detection, and domain age analysis.
+SafeCheck is a web application that verifies email legitimacy and provides safety scores. It's built as a full-stack TypeScript application with a React frontend and Express backend, using PostgreSQL for data persistence. The application integrates with AbstractAPI's Email Reputation service to analyze email addresses and provide detailed verification results including syntax validation, MX records, disposable email detection, SMTP validation, spam trap detection, and domain age analysis.
 
 ## User Preferences
 
