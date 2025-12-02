@@ -106,17 +106,33 @@ export async function registerRoutes(
   return httpServer;
 }
 
+const SUSPICIOUS_DOMAIN_WORDS = [
+  'fake', 'temp', 'trash', 'spam', 'disposable', 'throwaway', 
+  'mailinator', 'guerrilla', 'sharklasers', 'trashmail', 'tempmail',
+  'yopmail', 'getairmail', 'fakeinbox', 'burner', 'anonymous'
+];
+
+const SUSPICIOUS_USERNAME_PATTERNS = [
+  /^test/i, /^user\d+/i, /^admin/i, /^demo/i, /^sample/i,
+  /^fake/i, /^temp/i, /^null/i, /^example/i, /^noreply/i,
+  /^asdf/i, /^qwerty/i, /^12345/, /^abc123/i
+];
+
 function calculateScore(data: any): number {
-  const qualityScore = data.email_quality?.score;
-  if (qualityScore !== undefined && qualityScore !== null) {
-    return Math.round(parseFloat(qualityScore) * 100);
-  }
+  const email = data.email_address || '';
+  const [username, domain] = email.split('@');
+  const domainName = domain?.split('.')[0]?.toLowerCase() || '';
   
   let score = 50;
+  const qualityScore = data.email_quality?.score;
+  if (qualityScore !== undefined && qualityScore !== null) {
+    score = Math.round(parseFloat(qualityScore) * 100);
+  } else {
+    if (data.email_deliverability?.is_format_valid === true) score += 15;
+    if (data.email_deliverability?.is_mx_valid === true) score += 15;
+    if (data.email_deliverability?.is_smtp_valid === true) score += 15;
+  }
   
-  if (data.email_deliverability?.is_format_valid === true) score += 15;
-  if (data.email_deliverability?.is_mx_valid === true) score += 15;
-  if (data.email_deliverability?.is_smtp_valid === true) score += 15;
   if (data.email_quality?.is_disposable === true) score -= 50;
   if (data.email_quality?.is_catchall === true) score -= 10;
   if (data.email_quality?.is_role === true) score -= 5;
@@ -129,6 +145,18 @@ function calculateScore(data: any): number {
   else if (breachCount > 20) score -= 10;
   else if (breachCount > 5) score -= 5;
   
+  if (SUSPICIOUS_DOMAIN_WORDS.some(word => domainName.includes(word))) {
+    score -= 40;
+  }
+  
+  if (username && SUSPICIOUS_USERNAME_PATTERNS.some(pattern => pattern.test(username))) {
+    score -= 25;
+  }
+  
+  if (data.email_quality?.is_username_suspicious === true) {
+    score -= 15;
+  }
+  
   return Math.min(100, Math.max(0, score));
 }
 
@@ -136,6 +164,14 @@ function determineStatus(score: number, data: any): "safe" | "risky" | "invalid"
   if (data.email_deliverability?.status === "undeliverable") return "invalid";
   if (data.email_quality?.is_disposable === true) return "risky";
   if (data.email_risk?.address_risk_status === "high") return "risky";
+  
+  const email = data.email_address || '';
+  const [username, domain] = email.split('@');
+  const domainName = domain?.split('.')[0]?.toLowerCase() || '';
+  
+  if (SUSPICIOUS_DOMAIN_WORDS.some(word => domainName.includes(word))) return "risky";
+  if (username && SUSPICIOUS_USERNAME_PATTERNS.some(pattern => pattern.test(username))) return "risky";
+  
   if (score >= 70) return "safe";
   if (score >= 40) return "risky";
   return "invalid";
