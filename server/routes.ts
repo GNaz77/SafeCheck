@@ -69,6 +69,11 @@ export async function registerRoutes(
         console.error("Database error (non-blocking):", dbError);
       }
 
+      const breaches = data.email_breaches?.breached_domains?.map((b: any) => ({
+        domain: b.domain,
+        date: b.breach_date
+      })) || [];
+
       const result = {
         score: verificationData.score,
         status: verificationData.status,
@@ -82,6 +87,7 @@ export async function registerRoutes(
         },
         riskLevel: verificationData.riskLevel,
         riskFactors,
+        breaches,
       };
 
       return res.json(result);

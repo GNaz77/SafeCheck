@@ -43,6 +43,11 @@ type RiskFactor = {
   description: string;
 };
 
+type Breach = {
+  domain: string;
+  date: string;
+};
+
 type ScanResult = {
   score: number;
   status: "safe" | "risky" | "invalid";
@@ -56,6 +61,7 @@ type ScanResult = {
   };
   riskLevel: "Low" | "Medium" | "High";
   riskFactors?: RiskFactor[];
+  breaches?: Breach[];
 };
 
 const formSchema = z.object({
@@ -384,13 +390,43 @@ export default function Home() {
                   <CheckItem 
                     icon={AlertTriangle} 
                     label="Data Breaches" 
-                    status={result.riskFactors?.some(f => f.label === "Data Breaches") ? "error" : "success"} 
-                    value={result.riskFactors?.find(f => f.label === "Data Breaches")?.description.match(/\d+/)?.[0] 
-                      ? `${result.riskFactors?.find(f => f.label === "Data Breaches")?.description.match(/\d+/)?.[0]} found` 
+                    status={result.breaches && result.breaches.length > 0 ? "error" : "success"} 
+                    value={result.breaches && result.breaches.length > 0 
+                      ? `${result.breaches.length} found` 
                       : "None"} 
                   />
                 </CardContent>
               </Card>
+
+              {/* Data Breaches List */}
+              {result.breaches && result.breaches.length > 0 && (
+                <Card className="lg:col-span-3 border-destructive/50 shadow-lg">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2 text-destructive">
+                      <AlertTriangle className="w-5 h-5" />
+                      Data Breaches ({result.breaches.length})
+                    </CardTitle>
+                    <CardDescription>This email was found in the following data breaches</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid gap-2 md:grid-cols-3 lg:grid-cols-4 max-h-64 overflow-y-auto">
+                      {result.breaches.map((breach, index) => (
+                        <div 
+                          key={index}
+                          className="flex items-center justify-between p-3 rounded-lg bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-900"
+                        >
+                          <span className="font-medium text-sm text-red-700 dark:text-red-400 truncate">
+                            {breach.domain}
+                          </span>
+                          <span className="text-xs text-muted-foreground ml-2">
+                            {new Date(breach.date).getFullYear()}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
             </div>
           </motion.div>
         )}
