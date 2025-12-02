@@ -335,8 +335,8 @@ export default function Home() {
               {/* Detailed Checks */}
               <Card className="lg:col-span-2 border-border shadow-lg">
                 <CardHeader>
-                  <CardTitle>Detailed Analysis</CardTitle>
-                  <CardDescription>Technical verification results</CardDescription>
+                  <CardTitle>Technical Checks</CardTitle>
+                  <CardDescription>Can this email send and receive messages?</CardDescription>
                 </CardHeader>
                 <CardContent className="grid gap-4 md:grid-cols-2">
                   <CheckItem 
@@ -390,9 +390,9 @@ export default function Home() {
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2 text-destructive">
                       <AlertTriangle className="w-5 h-5" />
-                      Risk Factors Detected
+                      Trust Issues Detected
                     </CardTitle>
-                    <CardDescription>Issues that lowered the trust score</CardDescription>
+                    <CardDescription>Why this email may not be trustworthy (even if technically valid)</CardDescription>
                   </CardHeader>
                   <CardContent className="grid gap-3 md:grid-cols-2">
                     {result.riskFactors.map((factor, index) => (
