@@ -45,8 +45,12 @@ export async function registerRoutes(
         return res.status(500).json({ error: "Invalid response from verification service" });
       }
       
+      const email_domain = email.split('@')[1]?.toLowerCase() || '';
+      const isMajorProvider = MAJOR_EMAIL_PROVIDERS.includes(email_domain);
+      const smtpUnverifiable = data.email_deliverability?.is_smtp_valid === null && isMajorProvider;
+      
       const riskFactors = detectRiskFactors(data);
-      const score = calculateScore(data, riskFactors);
+      const score = calculateScore(data, riskFactors, smtpUnverifiable);
       const status = determineStatus(score, data, riskFactors);
       const riskLevel = determineRiskLevel(score);
 
@@ -113,6 +117,19 @@ export async function registerRoutes(
 
   return httpServer;
 }
+
+const MAJOR_EMAIL_PROVIDERS = [
+  'gmail.com', 'googlemail.com',
+  'yahoo.com', 'yahoo.co.uk', 'yahoo.fr', 'yahoo.de', 'yahoo.es', 'yahoo.it',
+  'outlook.com', 'hotmail.com', 'live.com', 'msn.com',
+  'icloud.com', 'me.com', 'mac.com',
+  'aol.com',
+  'protonmail.com', 'proton.me',
+  'zoho.com',
+  'mail.com',
+  'gmx.com', 'gmx.net',
+  'yandex.com', 'yandex.ru',
+];
 
 const SUSPICIOUS_DOMAIN_WORDS = [
   'fake', 'temp', 'trash', 'spam', 'disposable', 'throwaway', 
