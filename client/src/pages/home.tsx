@@ -335,8 +335,8 @@ export default function Home() {
               {/* Detailed Checks */}
               <Card className="lg:col-span-2 border-border shadow-lg">
                 <CardHeader>
-                  <CardTitle>Technical Checks</CardTitle>
-                  <CardDescription>Can this email send and receive messages?</CardDescription>
+                  <CardTitle>Detailed Analysis</CardTitle>
+                  <CardDescription>Technical verification results</CardDescription>
                 </CardHeader>
                 <CardContent className="grid gap-4 md:grid-cols-2">
                   <CheckItem 
@@ -347,9 +347,9 @@ export default function Home() {
                   />
                   <CheckItem 
                     icon={Globe} 
-                    label="Domain Status" 
-                    status={result.details.mxRecords ? "success" : "error"} 
-                    value={result.details.mxRecords ? "Active" : "Inactive"} 
+                    label="Domain Name" 
+                    status={result.riskFactors?.some(f => f.label === "Suspicious Domain") ? "error" : "success"} 
+                    value={result.riskFactors?.some(f => f.label === "Suspicious Domain") ? "Suspicious" : "Clean"} 
                   />
                   <CheckItem 
                     icon={Server} 
@@ -371,9 +371,9 @@ export default function Home() {
                   />
                   <CheckItem 
                     icon={ShieldAlert} 
-                    label="Spam Trap" 
-                    status={!result.details.spamTrap ? "success" : "error"} 
-                    value={result.details.spamTrap ? "Detected" : "Clean"} 
+                    label="Username" 
+                    status={result.riskFactors?.some(f => f.label.includes("Username")) ? "error" : "success"} 
+                    value={result.riskFactors?.some(f => f.label.includes("Username")) ? "Suspicious" : "Clean"} 
                   />
                   <CheckItem 
                     icon={History} 
@@ -381,53 +381,16 @@ export default function Home() {
                     status={result.details.domainAge.includes(">") ? "success" : "warning"} 
                     value={result.details.domainAge} 
                   />
+                  <CheckItem 
+                    icon={AlertTriangle} 
+                    label="Data Breaches" 
+                    status={result.riskFactors?.some(f => f.label === "Data Breaches") ? "error" : "success"} 
+                    value={result.riskFactors?.find(f => f.label === "Data Breaches")?.description.match(/\d+/)?.[0] 
+                      ? `${result.riskFactors?.find(f => f.label === "Data Breaches")?.description.match(/\d+/)?.[0]} found` 
+                      : "None"} 
+                  />
                 </CardContent>
               </Card>
-
-              {/* Risk Factors Section */}
-              {result.riskFactors && result.riskFactors.length > 0 && (
-                <Card className="lg:col-span-3 border-destructive/50 shadow-lg bg-destructive/5">
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2 text-destructive">
-                      <AlertTriangle className="w-5 h-5" />
-                      Trust Issues Detected
-                    </CardTitle>
-                    <CardDescription>Why this email may not be trustworthy (even if technically valid)</CardDescription>
-                  </CardHeader>
-                  <CardContent className="grid gap-3 md:grid-cols-2">
-                    {result.riskFactors.map((factor, index) => (
-                      <div 
-                        key={index}
-                        className={`flex items-start gap-3 p-4 rounded-lg border ${
-                          factor.type === 'danger' 
-                            ? 'bg-red-50 dark:bg-red-950/30 border-red-200 dark:border-red-900' 
-                            : 'bg-yellow-50 dark:bg-yellow-950/30 border-yellow-200 dark:border-yellow-900'
-                        }`}
-                      >
-                        <div className={`mt-0.5 ${
-                          factor.type === 'danger' ? 'text-red-600' : 'text-yellow-600'
-                        }`}>
-                          {factor.type === 'danger' ? (
-                            <XCircle className="w-5 h-5" />
-                          ) : (
-                            <AlertTriangle className="w-5 h-5" />
-                          )}
-                        </div>
-                        <div>
-                          <p className={`font-semibold ${
-                            factor.type === 'danger' ? 'text-red-700 dark:text-red-400' : 'text-yellow-700 dark:text-yellow-400'
-                          }`}>
-                            {factor.label}
-                          </p>
-                          <p className="text-sm text-muted-foreground mt-0.5">
-                            {factor.description}
-                          </p>
-                        </div>
-                      </div>
-                    ))}
-                  </CardContent>
-                </Card>
-              )}
             </div>
           </motion.div>
         )}
