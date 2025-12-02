@@ -45,8 +45,9 @@ export async function registerRoutes(
         return res.status(500).json({ error: "Invalid response from verification service" });
       }
       
-      const score = calculateScore(data);
-      const status = determineStatus(score, data);
+      const riskFactors = detectRiskFactors(data);
+      const score = calculateScore(data, riskFactors);
+      const status = determineStatus(score, data, riskFactors);
       const riskLevel = determineRiskLevel(score);
 
       const verificationData = {
@@ -80,6 +81,7 @@ export async function registerRoutes(
           domainAge: verificationData.domainAge,
         },
         riskLevel: verificationData.riskLevel,
+        riskFactors,
       };
 
       return res.json(result);
@@ -113,16 +115,91 @@ const SUSPICIOUS_DOMAIN_WORDS = [
 ];
 
 const SUSPICIOUS_USERNAME_PATTERNS = [
-  /^test/i, /^user\d+/i, /^admin/i, /^demo/i, /^sample/i,
-  /^fake/i, /^temp/i, /^null/i, /^example/i, /^noreply/i,
-  /^asdf/i, /^qwerty/i, /^12345/, /^abc123/i
+  { pattern: /^test/i, description: "Username starts with 'test'" },
+  { pattern: /^user\d+/i, description: "Generic username pattern (user + numbers)" },
+  { pattern: /^admin/i, description: "Username starts with 'admin'" },
+  { pattern: /^demo/i, description: "Username starts with 'demo'" },
+  { pattern: /^sample/i, description: "Username starts with 'sample'" },
+  { pattern: /^fake/i, description: "Username starts with 'fake'" },
+  { pattern: /^temp/i, description: "Username starts with 'temp'" },
+  { pattern: /^null/i, description: "Username starts with 'null'" },
+  { pattern: /^example/i, description: "Username starts with 'example'" },
+  { pattern: /^noreply/i, description: "Username is 'noreply'" },
+  { pattern: /^asdf/i, description: "Keyboard pattern username" },
+  { pattern: /^qwerty/i, description: "Keyboard pattern username" },
+  { pattern: /^12345/, description: "Numeric sequence username" },
+  { pattern: /^abc123/i, description: "Common test pattern username" },
 ];
 
-function calculateScore(data: any): number {
+interface RiskFactor {
+  type: "warning" | "danger";
+  label: string;
+  description: string;
+}
+
+function detectRiskFactors(data: any): RiskFactor[] {
+  const factors: RiskFactor[] = [];
   const email = data.email_address || '';
   const [username, domain] = email.split('@');
   const domainName = domain?.split('.')[0]?.toLowerCase() || '';
   
+  const suspiciousDomainWord = SUSPICIOUS_DOMAIN_WORDS.find(word => domainName.includes(word));
+  if (suspiciousDomainWord) {
+    factors.push({
+      type: "danger",
+      label: "Suspicious Domain",
+      description: `Domain contains "${suspiciousDomainWord}" - commonly used for fake emails`
+    });
+  }
+  
+  if (username) {
+    const matchedPattern = SUSPICIOUS_USERNAME_PATTERNS.find(p => p.pattern.test(username));
+    if (matchedPattern) {
+      factors.push({
+        type: "warning",
+        label: "Suspicious Username",
+        description: matchedPattern.description
+      });
+    }
+  }
+  
+  if (data.email_quality?.is_username_suspicious === true) {
+    factors.push({
+      type: "warning",
+      label: "Username Flagged",
+      description: "Email provider flagged this username as suspicious"
+    });
+  }
+  
+  if (data.email_risk?.address_risk_status === "high") {
+    factors.push({
+      type: "danger",
+      label: "High Risk Address",
+      description: "This email address has been flagged as high risk"
+    });
+  }
+  
+  const breachCount = data.email_breaches?.total_breaches ?? 0;
+  if (breachCount > 0) {
+    factors.push({
+      type: breachCount > 10 ? "danger" : "warning",
+      label: "Data Breaches",
+      description: `Found in ${breachCount} known data breach${breachCount > 1 ? 'es' : ''}`
+    });
+  }
+  
+  if (data.email_quality?.is_disposable === true) {
+    factors.push({
+      type: "danger",
+      label: "Disposable Email",
+      description: "This is a temporary/disposable email service"
+    });
+  }
+  
+  return factors;
+}
+
+function calculateScore(data: any, riskFactors: RiskFactor[]): number {
   let score = 50;
   const qualityScore = data.email_quality?.score;
   if (qualityScore !== undefined && qualityScore !== null) {
@@ -133,44 +210,24 @@ function calculateScore(data: any): number {
     if (data.email_deliverability?.is_smtp_valid === true) score += 15;
   }
   
-  if (data.email_quality?.is_disposable === true) score -= 50;
   if (data.email_quality?.is_catchall === true) score -= 10;
   if (data.email_quality?.is_role === true) score -= 5;
   
-  if (data.email_risk?.address_risk_status === "high") score -= 20;
-  else if (data.email_risk?.address_risk_status === "medium") score -= 10;
+  if (data.email_risk?.address_risk_status === "medium") score -= 10;
   
-  const breachCount = data.email_breaches?.total_breaches ?? 0;
-  if (breachCount > 50) score -= 15;
-  else if (breachCount > 20) score -= 10;
-  else if (breachCount > 5) score -= 5;
-  
-  if (SUSPICIOUS_DOMAIN_WORDS.some(word => domainName.includes(word))) {
-    score -= 40;
-  }
-  
-  if (username && SUSPICIOUS_USERNAME_PATTERNS.some(pattern => pattern.test(username))) {
-    score -= 25;
-  }
-  
-  if (data.email_quality?.is_username_suspicious === true) {
-    score -= 15;
+  for (const factor of riskFactors) {
+    if (factor.type === "danger") score -= 30;
+    else if (factor.type === "warning") score -= 15;
   }
   
   return Math.min(100, Math.max(0, score));
 }
 
-function determineStatus(score: number, data: any): "safe" | "risky" | "invalid" {
+function determineStatus(score: number, data: any, riskFactors: RiskFactor[]): "safe" | "risky" | "invalid" {
   if (data.email_deliverability?.status === "undeliverable") return "invalid";
-  if (data.email_quality?.is_disposable === true) return "risky";
-  if (data.email_risk?.address_risk_status === "high") return "risky";
   
-  const email = data.email_address || '';
-  const [username, domain] = email.split('@');
-  const domainName = domain?.split('.')[0]?.toLowerCase() || '';
-  
-  if (SUSPICIOUS_DOMAIN_WORDS.some(word => domainName.includes(word))) return "risky";
-  if (username && SUSPICIOUS_USERNAME_PATTERNS.some(pattern => pattern.test(username))) return "risky";
+  if (riskFactors.some(f => f.type === "danger")) return "risky";
+  if (riskFactors.length > 1) return "risky";
   
   if (score >= 70) return "safe";
   if (score >= 40) return "risky";

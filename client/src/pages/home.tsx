@@ -37,6 +37,12 @@ import { PieChart, Pie, Cell, ResponsiveContainer } from "recharts";
 
 // --- Types & Mock Data ---
 
+type RiskFactor = {
+  type: "warning" | "danger";
+  label: string;
+  description: string;
+};
+
 type ScanResult = {
   score: number;
   status: "safe" | "risky" | "invalid";
@@ -49,6 +55,7 @@ type ScanResult = {
     domainAge: string;
   };
   riskLevel: "Low" | "Medium" | "High";
+  riskFactors?: RiskFactor[];
 };
 
 const formSchema = z.object({
@@ -376,6 +383,51 @@ export default function Home() {
                   />
                 </CardContent>
               </Card>
+
+              {/* Risk Factors Section */}
+              {result.riskFactors && result.riskFactors.length > 0 && (
+                <Card className="lg:col-span-3 border-destructive/50 shadow-lg bg-destructive/5">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2 text-destructive">
+                      <AlertTriangle className="w-5 h-5" />
+                      Risk Factors Detected
+                    </CardTitle>
+                    <CardDescription>Issues that lowered the trust score</CardDescription>
+                  </CardHeader>
+                  <CardContent className="grid gap-3 md:grid-cols-2">
+                    {result.riskFactors.map((factor, index) => (
+                      <div 
+                        key={index}
+                        className={`flex items-start gap-3 p-4 rounded-lg border ${
+                          factor.type === 'danger' 
+                            ? 'bg-red-50 dark:bg-red-950/30 border-red-200 dark:border-red-900' 
+                            : 'bg-yellow-50 dark:bg-yellow-950/30 border-yellow-200 dark:border-yellow-900'
+                        }`}
+                      >
+                        <div className={`mt-0.5 ${
+                          factor.type === 'danger' ? 'text-red-600' : 'text-yellow-600'
+                        }`}>
+                          {factor.type === 'danger' ? (
+                            <XCircle className="w-5 h-5" />
+                          ) : (
+                            <AlertTriangle className="w-5 h-5" />
+                          )}
+                        </div>
+                        <div>
+                          <p className={`font-semibold ${
+                            factor.type === 'danger' ? 'text-red-700 dark:text-red-400' : 'text-yellow-700 dark:text-yellow-400'
+                          }`}>
+                            {factor.label}
+                          </p>
+                          <p className="text-sm text-muted-foreground mt-0.5">
+                            {factor.description}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                  </CardContent>
+                </Card>
+              )}
             </div>
           </motion.div>
         )}
