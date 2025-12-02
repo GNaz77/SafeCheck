@@ -373,7 +373,7 @@ export default function Home() {
                     icon={Lock} 
                     label="SMTP Check" 
                     status={result.details.smtp ? "success" : "warning"} 
-                    value={result.details.smtp ? "Connected" : "Blocked"} 
+                    value={result.details.smtp ? "Connected" : "Unverified"} 
                   />
                   <CheckItem 
                     icon={ShieldAlert} 
