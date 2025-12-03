@@ -56,12 +56,14 @@ type ScanResult = {
     mxRecords: boolean;
     disposable: boolean;
     smtp: boolean;
+    smtpUnverifiable?: boolean;
     spamTrap: boolean;
     domainAge: string;
   };
   riskLevel: "Low" | "Medium" | "High";
   riskFactors?: RiskFactor[];
   breaches?: Breach[];
+  providerName?: string | null;
 };
 
 const formSchema = z.object({
@@ -120,7 +122,7 @@ const CheckItem = ({
 }: { 
   icon: any; 
   label: string; 
-  status: "success" | "error" | "warning"; 
+  status: "success" | "error" | "warning" | "neutral"; 
   value: string 
 }) => (
   <div className="flex items-center justify-between p-3 rounded-lg border bg-card hover:bg-accent/50 transition-colors">
@@ -128,6 +130,7 @@ const CheckItem = ({
       <div className={`p-2 rounded-full ${
         status === "success" ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400" :
         status === "error" ? "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400" :
+        status === "neutral" ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400" :
         "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400"
       }`}>
         <Icon className="w-4 h-4" />
@@ -338,8 +341,68 @@ export default function Home() {
                 </CardContent>
               </Card>
 
+              {/* Why This Score - Risk Factors */}
+              {result.riskFactors && result.riskFactors.length > 0 && (
+                <Card className="lg:col-span-2 border-orange-200 dark:border-orange-900 shadow-lg bg-gradient-to-br from-orange-50/50 to-red-50/50 dark:from-orange-950/20 dark:to-red-950/20">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <AlertTriangle className="w-5 h-5 text-orange-500" />
+                      Why This Score?
+                    </CardTitle>
+                    <CardDescription>Issues detected that affected the safety score</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    {result.riskFactors.map((factor, index) => (
+                      <div 
+                        key={index}
+                        className={`flex items-start gap-3 p-4 rounded-lg border ${
+                          factor.type === "danger" 
+                            ? "bg-red-50 border-red-200 dark:bg-red-950/30 dark:border-red-900" 
+                            : "bg-yellow-50 border-yellow-200 dark:bg-yellow-950/30 dark:border-yellow-900"
+                        }`}
+                      >
+                        <div className={`p-1.5 rounded-full mt-0.5 ${
+                          factor.type === "danger" 
+                            ? "bg-red-100 text-red-600 dark:bg-red-900 dark:text-red-400" 
+                            : "bg-yellow-100 text-yellow-600 dark:bg-yellow-900 dark:text-yellow-400"
+                        }`}>
+                          {factor.type === "danger" ? <XCircle className="w-4 h-4" /> : <AlertTriangle className="w-4 h-4" />}
+                        </div>
+                        <div>
+                          <p className={`font-semibold ${
+                            factor.type === "danger" ? "text-red-700 dark:text-red-400" : "text-yellow-700 dark:text-yellow-400"
+                          }`}>
+                            {factor.label}
+                          </p>
+                          <p className="text-sm text-muted-foreground mt-0.5">
+                            {factor.description}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* All Clear Message */}
+              {(!result.riskFactors || result.riskFactors.length === 0) && result.status === "safe" && (
+                <Card className="lg:col-span-2 border-green-200 dark:border-green-900 shadow-lg bg-gradient-to-br from-green-50/50 to-emerald-50/50 dark:from-green-950/20 dark:to-emerald-950/20">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2 text-green-700 dark:text-green-400">
+                      <CheckCircle2 className="w-5 h-5" />
+                      All Clear!
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-muted-foreground">
+                      No risk factors detected. This email passed all safety checks and appears to be legitimate.
+                    </p>
+                  </CardContent>
+                </Card>
+              )}
+
               {/* Detailed Checks */}
-              <Card className="lg:col-span-2 border-border shadow-lg">
+              <Card className="lg:col-span-3 border-border shadow-lg">
                 <CardHeader>
                   <CardTitle>Detailed Analysis</CardTitle>
                   <CardDescription>Technical verification results</CardDescription>
@@ -372,8 +435,8 @@ export default function Home() {
                   <CheckItem 
                     icon={Lock} 
                     label="SMTP Check" 
-                    status={result.details.smtp ? "success" : "warning"} 
-                    value={result.details.smtp ? "Connected" : "Unverified"} 
+                    status={result.details.smtp ? "success" : (result.details.smtpUnverifiable ? "neutral" : "warning")} 
+                    value={result.details.smtp ? "Connected" : (result.details.smtpUnverifiable ? `${result.providerName || "Provider"} blocks verification` : "Unverified")} 
                   />
                   <CheckItem 
                     icon={ShieldAlert} 

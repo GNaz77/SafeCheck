@@ -86,12 +86,14 @@ export async function registerRoutes(
           mxRecords: verificationData.mxRecords,
           disposable: verificationData.disposable,
           smtp: verificationData.smtpValid,
+          smtpUnverifiable,
           spamTrap: verificationData.spamTrap,
           domainAge: verificationData.domainAge,
         },
         riskLevel: verificationData.riskLevel,
         riskFactors,
         breaches,
+        providerName: data.email_sender?.email_provider_name || null,
       };
 
       return res.json(result);
@@ -222,7 +224,7 @@ function detectRiskFactors(data: any): RiskFactor[] {
   return factors;
 }
 
-function calculateScore(data: any, riskFactors: RiskFactor[]): number {
+function calculateScore(data: any, riskFactors: RiskFactor[], smtpUnverifiable: boolean = false): number {
   let score = 50;
   const qualityScore = data.email_quality?.score;
   if (qualityScore !== undefined && qualityScore !== null) {
@@ -231,6 +233,8 @@ function calculateScore(data: any, riskFactors: RiskFactor[]): number {
     if (data.email_deliverability?.is_format_valid === true) score += 15;
     if (data.email_deliverability?.is_mx_valid === true) score += 15;
     if (data.email_deliverability?.is_smtp_valid === true) score += 15;
+    // Don't penalize major providers for unverifiable SMTP - give neutral score
+    if (smtpUnverifiable) score += 10;
   }
   
   if (data.email_quality?.is_catchall === true) score -= 10;
