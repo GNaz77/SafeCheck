@@ -372,41 +372,9 @@ export default function Home() {
                 </CardContent>
               </Card>
 
-              {/* Summary Card */}
-              <Card className={`lg:col-span-2 shadow-lg ${
-                result.riskFactors && result.riskFactors.length > 0 
-                  ? "border-orange-200 dark:border-orange-900 bg-gradient-to-br from-orange-50/50 to-red-50/50 dark:from-orange-950/20 dark:to-red-950/20"
-                  : "border-green-200 dark:border-green-900 bg-gradient-to-br from-green-50/50 to-emerald-50/50 dark:from-green-950/20 dark:to-emerald-950/20"
-              }`}>
-                <CardHeader>
-                  <CardTitle className={`flex items-center gap-2 ${
-                    result.riskFactors && result.riskFactors.length > 0
-                      ? "text-orange-700 dark:text-orange-400"
-                      : "text-green-700 dark:text-green-400"
-                  }`}>
-                    {result.riskFactors && result.riskFactors.length > 0 ? (
-                      <>
-                        <AlertTriangle className="w-5 h-5" />
-                        {result.riskFactors.length} Issue{result.riskFactors.length > 1 ? 's' : ''} Found
-                      </>
-                    ) : (
-                      <>
-                        <CheckCircle2 className="w-5 h-5" />
-                        All Clear!
-                      </>
-                    )}
-                  </CardTitle>
-                  <CardDescription>
-                    {result.riskFactors && result.riskFactors.length > 0
-                      ? "Some checks revealed potential concerns"
-                      : "No risk factors detected. This email passed all safety checks."
-                    }
-                  </CardDescription>
-                </CardHeader>
-              </Card>
 
               {/* Detailed Checks */}
-              <Card className="lg:col-span-3 border-border shadow-lg">
+              <Card className="lg:col-span-2 border-border shadow-lg">
                 <CardHeader>
                   <CardTitle>Detailed Analysis</CardTitle>
                   <CardDescription>Technical verification results</CardDescription>
