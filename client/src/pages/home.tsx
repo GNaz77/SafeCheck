@@ -26,6 +26,13 @@ import {
   CardTitle, 
   CardDescription 
 } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -118,14 +125,23 @@ const CheckItem = ({
   icon: Icon, 
   label, 
   status, 
-  value 
+  value,
+  onClick,
+  hasExplanation
 }: { 
   icon: any; 
   label: string; 
   status: "success" | "error" | "warning" | "neutral"; 
-  value: string 
+  value: string;
+  onClick?: () => void;
+  hasExplanation?: boolean;
 }) => (
-  <div className="flex items-center justify-between p-3 rounded-lg border bg-card hover:bg-accent/50 transition-colors">
+  <div 
+    className={`flex items-center justify-between p-3 rounded-lg border bg-card hover:bg-accent/50 transition-colors ${
+      hasExplanation ? "cursor-pointer ring-1 ring-orange-300 dark:ring-orange-700" : ""
+    }`}
+    onClick={onClick}
+  >
     <div className="flex items-center gap-3">
       <div className={`p-2 rounded-full ${
         status === "success" ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400" :
@@ -142,6 +158,8 @@ const CheckItem = ({
       {status === "success" && <CheckCircle2 className="w-4 h-4 text-green-500" />}
       {status === "error" && <XCircle className="w-4 h-4 text-red-500" />}
       {status === "warning" && <AlertTriangle className="w-4 h-4 text-yellow-500" />}
+      {status === "neutral" && <AlertTriangle className="w-4 h-4 text-blue-500" />}
+      {hasExplanation && <ChevronRight className="w-4 h-4 text-orange-500 ml-1" />}
     </div>
   </div>
 );
@@ -152,6 +170,19 @@ export default function Home() {
   const [isScanning, setIsScanning] = useState(false);
   const [result, setResult] = useState<ScanResult | null>(null);
   const [progress, setProgress] = useState(0);
+  const [explanationOpen, setExplanationOpen] = useState(false);
+  const [selectedExplanation, setSelectedExplanation] = useState<{title: string; factors: RiskFactor[]} | null>(null);
+
+  const showExplanation = (title: string, factorLabels: string[]) => {
+    if (!result?.riskFactors) return;
+    const matchingFactors = result.riskFactors.filter(f => 
+      factorLabels.some(label => f.label.toLowerCase().includes(label.toLowerCase()))
+    );
+    if (matchingFactors.length > 0) {
+      setSelectedExplanation({ title, factors: matchingFactors });
+      setExplanationOpen(true);
+    }
+  };
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -341,65 +372,38 @@ export default function Home() {
                 </CardContent>
               </Card>
 
-              {/* Why This Score - Risk Factors */}
-              {result.riskFactors && result.riskFactors.length > 0 && (
-                <Card className="lg:col-span-2 border-orange-200 dark:border-orange-900 shadow-lg bg-gradient-to-br from-orange-50/50 to-red-50/50 dark:from-orange-950/20 dark:to-red-950/20">
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <AlertTriangle className="w-5 h-5 text-orange-500" />
-                      Why This Score?
-                    </CardTitle>
-                    <CardDescription>Issues detected that affected the safety score</CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-3">
-                    {result.riskFactors.map((factor, index) => (
-                      <div 
-                        key={index}
-                        className={`flex items-start gap-3 p-4 rounded-lg border ${
-                          factor.type === "danger" 
-                            ? "bg-red-50 border-red-200 dark:bg-red-950/30 dark:border-red-900" 
-                            : "bg-yellow-50 border-yellow-200 dark:bg-yellow-950/30 dark:border-yellow-900"
-                        }`}
-                      >
-                        <div className={`p-1.5 rounded-full mt-0.5 ${
-                          factor.type === "danger" 
-                            ? "bg-red-100 text-red-600 dark:bg-red-900 dark:text-red-400" 
-                            : "bg-yellow-100 text-yellow-600 dark:bg-yellow-900 dark:text-yellow-400"
-                        }`}>
-                          {factor.type === "danger" ? <XCircle className="w-4 h-4" /> : <AlertTriangle className="w-4 h-4" />}
-                        </div>
-                        <div>
-                          <p className={`font-semibold ${
-                            factor.type === "danger" ? "text-red-700 dark:text-red-400" : "text-yellow-700 dark:text-yellow-400"
-                          }`}>
-                            {factor.label}
-                          </p>
-                          <p className="text-sm text-muted-foreground mt-0.5">
-                            {factor.description}
-                          </p>
-                        </div>
-                      </div>
-                    ))}
-                  </CardContent>
-                </Card>
-              )}
-
-              {/* All Clear Message */}
-              {(!result.riskFactors || result.riskFactors.length === 0) && result.status === "safe" && (
-                <Card className="lg:col-span-2 border-green-200 dark:border-green-900 shadow-lg bg-gradient-to-br from-green-50/50 to-emerald-50/50 dark:from-green-950/20 dark:to-emerald-950/20">
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2 text-green-700 dark:text-green-400">
-                      <CheckCircle2 className="w-5 h-5" />
-                      All Clear!
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-muted-foreground">
-                      No risk factors detected. This email passed all safety checks and appears to be legitimate.
-                    </p>
-                  </CardContent>
-                </Card>
-              )}
+              {/* Summary Card */}
+              <Card className={`lg:col-span-2 shadow-lg ${
+                result.riskFactors && result.riskFactors.length > 0 
+                  ? "border-orange-200 dark:border-orange-900 bg-gradient-to-br from-orange-50/50 to-red-50/50 dark:from-orange-950/20 dark:to-red-950/20"
+                  : "border-green-200 dark:border-green-900 bg-gradient-to-br from-green-50/50 to-emerald-50/50 dark:from-green-950/20 dark:to-emerald-950/20"
+              }`}>
+                <CardHeader>
+                  <CardTitle className={`flex items-center gap-2 ${
+                    result.riskFactors && result.riskFactors.length > 0
+                      ? "text-orange-700 dark:text-orange-400"
+                      : "text-green-700 dark:text-green-400"
+                  }`}>
+                    {result.riskFactors && result.riskFactors.length > 0 ? (
+                      <>
+                        <AlertTriangle className="w-5 h-5" />
+                        {result.riskFactors.length} Issue{result.riskFactors.length > 1 ? 's' : ''} Found
+                      </>
+                    ) : (
+                      <>
+                        <CheckCircle2 className="w-5 h-5" />
+                        All Clear!
+                      </>
+                    )}
+                  </CardTitle>
+                  <CardDescription>
+                    {result.riskFactors && result.riskFactors.length > 0
+                      ? "Click on highlighted items below to see why they were flagged"
+                      : "No risk factors detected. This email passed all safety checks."
+                    }
+                  </CardDescription>
+                </CardHeader>
+              </Card>
 
               {/* Detailed Checks */}
               <Card className="lg:col-span-3 border-border shadow-lg">
@@ -419,6 +423,8 @@ export default function Home() {
                     label="Domain Name" 
                     status={result.riskFactors?.some(f => f.label === "Suspicious Domain") ? "error" : "success"} 
                     value={result.riskFactors?.some(f => f.label === "Suspicious Domain") ? "Suspicious" : "Clean"} 
+                    hasExplanation={result.riskFactors?.some(f => f.label === "Suspicious Domain")}
+                    onClick={() => showExplanation("Domain Name Issue", ["Suspicious Domain"])}
                   />
                   <CheckItem 
                     icon={Server} 
@@ -431,6 +437,8 @@ export default function Home() {
                     label="Disposable" 
                     status={!result.details.disposable ? "success" : "error"} 
                     value={result.details.disposable ? "Yes" : "No"} 
+                    hasExplanation={result.riskFactors?.some(f => f.label === "Disposable Email")}
+                    onClick={() => showExplanation("Disposable Email", ["Disposable"])}
                   />
                   <CheckItem 
                     icon={Lock} 
@@ -443,6 +451,8 @@ export default function Home() {
                     label="Username" 
                     status={result.riskFactors?.some(f => f.label.includes("Username")) ? "error" : "success"} 
                     value={result.riskFactors?.some(f => f.label.includes("Username")) ? "Suspicious" : "Clean"} 
+                    hasExplanation={result.riskFactors?.some(f => f.label.includes("Username"))}
+                    onClick={() => showExplanation("Username Issue", ["Username"])}
                   />
                   <CheckItem 
                     icon={History} 
@@ -457,7 +467,21 @@ export default function Home() {
                     value={result.breaches && result.breaches.length > 0 
                       ? `${result.breaches.length} found` 
                       : "None"} 
+                    hasExplanation={result.riskFactors?.some(f => f.label === "Data Breaches")}
+                    onClick={() => showExplanation("Data Breaches", ["Breach"])}
                   />
+                  
+                  {/* High Risk Address indicator */}
+                  {result.riskFactors?.some(f => f.label === "High Risk Address") && (
+                    <CheckItem 
+                      icon={ShieldAlert} 
+                      label="Risk Status" 
+                      status="error"
+                      value="High Risk" 
+                      hasExplanation={true}
+                      onClick={() => showExplanation("High Risk Address", ["High Risk"])}
+                    />
+                  )}
                 </CardContent>
               </Card>
 
@@ -534,6 +558,51 @@ export default function Home() {
           </div>
         </motion.section>
       )}
+
+      {/* Explanation Dialog */}
+      <Dialog open={explanationOpen} onOpenChange={setExplanationOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-orange-600">
+              <AlertTriangle className="w-5 h-5" />
+              {selectedExplanation?.title || "Issue Details"}
+            </DialogTitle>
+            <DialogDescription>
+              Here's why this was flagged
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3 mt-4">
+            {selectedExplanation?.factors.map((factor, index) => (
+              <div 
+                key={index}
+                className={`flex items-start gap-3 p-4 rounded-lg border ${
+                  factor.type === "danger" 
+                    ? "bg-red-50 border-red-200 dark:bg-red-950/30 dark:border-red-900" 
+                    : "bg-yellow-50 border-yellow-200 dark:bg-yellow-950/30 dark:border-yellow-900"
+                }`}
+              >
+                <div className={`p-1.5 rounded-full mt-0.5 ${
+                  factor.type === "danger" 
+                    ? "bg-red-100 text-red-600 dark:bg-red-900 dark:text-red-400" 
+                    : "bg-yellow-100 text-yellow-600 dark:bg-yellow-900 dark:text-yellow-400"
+                }`}>
+                  {factor.type === "danger" ? <XCircle className="w-4 h-4" /> : <AlertTriangle className="w-4 h-4" />}
+                </div>
+                <div>
+                  <p className={`font-semibold ${
+                    factor.type === "danger" ? "text-red-700 dark:text-red-400" : "text-yellow-700 dark:text-yellow-400"
+                  }`}>
+                    {factor.label}
+                  </p>
+                  <p className="text-sm text-muted-foreground mt-0.5">
+                    {factor.description}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
