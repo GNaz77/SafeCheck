@@ -398,7 +398,7 @@ export default function Home() {
                   </CardTitle>
                   <CardDescription>
                     {result.riskFactors && result.riskFactors.length > 0
-                      ? "Click on highlighted items below to see why they were flagged"
+                      ? "Some checks revealed potential concerns"
                       : "No risk factors detected. This email passed all safety checks."
                     }
                   </CardDescription>
