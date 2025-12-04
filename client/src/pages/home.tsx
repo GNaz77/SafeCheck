@@ -136,18 +136,20 @@ const CheckItem = ({
   onClick?: () => void;
   hasExplanation?: boolean;
 }) => (
-  <div 
-    className={`flex items-center justify-between p-3 rounded-lg border bg-card hover:bg-accent/50 transition-colors ${
-      hasExplanation ? "cursor-pointer ring-1 ring-orange-300 dark:ring-orange-700" : ""
+  <motion.div 
+    whileHover={{ scale: 1.02 }}
+    whileTap={hasExplanation ? { scale: 0.98 } : {}}
+    className={`sc-check-item flex items-center justify-between ${
+      hasExplanation ? "sc-check-item-clickable" : ""
     }`}
     onClick={onClick}
   >
     <div className="flex items-center gap-3">
-      <div className={`p-2 rounded-full ${
-        status === "success" ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400" :
-        status === "error" ? "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400" :
-        status === "neutral" ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400" :
-        "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400"
+      <div className={`sc-icon-badge ${
+        status === "success" ? "sc-icon-badge-success" :
+        status === "error" ? "sc-icon-badge-error" :
+        status === "neutral" ? "sc-icon-badge-neutral" :
+        "sc-icon-badge-warning"
       }`}>
         <Icon className="w-4 h-4" />
       </div>
@@ -155,13 +157,13 @@ const CheckItem = ({
     </div>
     <div className="flex items-center gap-2">
       <span className="text-sm text-muted-foreground">{value}</span>
-      {status === "success" && <CheckCircle2 className="w-4 h-4 text-green-500" />}
-      {status === "error" && <XCircle className="w-4 h-4 text-red-500" />}
-      {status === "warning" && <AlertTriangle className="w-4 h-4 text-yellow-500" />}
-      {status === "neutral" && <AlertTriangle className="w-4 h-4 text-blue-500" />}
-      {hasExplanation && <ChevronRight className="w-4 h-4 text-orange-500 ml-1" />}
+      {status === "success" && <CheckCircle2 className="w-4 h-4 text-success" />}
+      {status === "error" && <XCircle className="w-4 h-4 text-destructive" />}
+      {status === "warning" && <AlertTriangle className="w-4 h-4 text-amber-500" />}
+      {status === "neutral" && <AlertTriangle className="w-4 h-4 text-primary" />}
+      {hasExplanation && <ChevronRight className="w-4 h-4 text-primary ml-1" />}
     </div>
-  </div>
+  </motion.div>
 );
 
 // --- Main Page ---
@@ -244,67 +246,96 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-background text-foreground overflow-x-hidden selection:bg-primary/20">
       
-      {/* Hero Section */}
-      <section className="relative pt-24 pb-32 px-4 overflow-hidden">
-        {/* Background Image with Overlay */}
-        <div className="absolute inset-0 z-0">
-          <img 
-            src={bgImage} 
-            alt="Security Background" 
-            className="w-full h-full object-cover opacity-30 dark:opacity-20"
-          />
-          <div className="absolute inset-0 bg-linear-to-b from-background/80 via-background/90 to-background"></div>
-        </div>
+      {/* Ambient Background Orbs */}
+      <div className="fixed inset-0 pointer-events-none overflow-hidden">
+        <div className="sc-orb sc-orb-1" />
+        <div className="sc-orb sc-orb-2" />
+        <div className="sc-orb sc-orb-3" />
+      </div>
 
-        <div className="relative z-10 container mx-auto max-w-3xl text-center space-y-8">
+      {/* Hero Section */}
+      <section className="relative pt-20 pb-24 px-4 overflow-hidden">
+        <div className="relative z-10 container mx-auto max-w-4xl text-center space-y-10">
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
+            transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
+            className="space-y-6"
           >
-            <Badge variant="outline" className="mb-4 py-1.5 px-4 backdrop-blur-xs bg-background/50 border-primary/20 text-primary">
-              <ShieldCheck className="w-3 h-3 mr-2" />
-              Enterprise-Grade Verification
-            </Badge>
-            <h1 className="text-5xl md:text-6xl font-display font-bold tracking-tight text-foreground mb-6">
-              Verify Email <span className="text-gradient">Legitimacy</span>
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full sc-glass text-sm font-medium text-primary">
+              <div className="w-2 h-2 rounded-full bg-success animate-pulse" />
+              Real-time Email Intelligence
+            </div>
+            
+            <h1 className="sc-hero-title font-display">
+              Is that email{" "}
+              <span className="sc-text-gradient">actually safe?</span>
             </h1>
-            <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-              Instantly check if an email address is valid, safe, and deliverable. 
-              Protect your reputation and avoid bouncing.
+            
+            <p className="sc-hero-subtitle text-muted-foreground mx-auto">
+              Instantly verify any email address. Get detailed trust scores, breach history, 
+              and risk assessment before you respond.
             </p>
           </motion.div>
 
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.2 }}
-            className="bg-card/50 backdrop-blur-xl p-2 rounded-2xl border shadow-2xl ring-1 ring-white/20 dark:ring-white/10"
+            transition={{ duration: 0.7, delay: 0.15, ease: [0.22, 1, 0.36, 1] }}
+            className="sc-glass-strong p-3 rounded-2xl max-w-2xl mx-auto"
           >
-            <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col md:flex-row gap-2">
+            <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col md:flex-row gap-3">
               <div className="relative grow">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground w-5 h-5" />
-                <Input
+                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground w-5 h-5" />
+                <input
                   {...form.register("email")}
-                  placeholder="Enter email address to verify..."
-                  className="pl-10 h-14 text-lg bg-background/80 border-transparent focus:border-primary ring-0 focus:ring-0 transition-all"
+                  placeholder="Enter email to verify..."
+                  className="sc-input w-full pl-12 pr-4 h-14 text-lg rounded-xl outline-none"
                   disabled={isScanning}
                 />
               </div>
-              <Button 
+              <button 
                 type="submit" 
-                size="lg" 
-                className="h-14 px-8 text-lg font-semibold shadow-lg hover:shadow-primary/25 transition-all"
+                className="sc-btn-primary h-14 px-8 text-lg font-semibold rounded-xl text-white disabled:opacity-50 disabled:cursor-not-allowed"
                 disabled={isScanning}
               >
-                {isScanning ? "Scanning..." : "Verify Email"}
-              </Button>
+                {isScanning ? (
+                  <span className="flex items-center gap-2">
+                    <motion.div 
+                      animate={{ rotate: 360 }}
+                      transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                      className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full"
+                    />
+                    Scanning...
+                  </span>
+                ) : "Verify"}
+              </button>
             </form>
             {form.formState.errors.email && (
-              <p className="text-red-500 text-sm text-left mt-2 px-2">
+              <p className="text-destructive text-sm text-left mt-2 px-2">
                 {form.formState.errors.email.message}
               </p>
             )}
+          </motion.div>
+          
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.4, duration: 0.6 }}
+            className="flex items-center justify-center gap-8 text-sm text-muted-foreground"
+          >
+            <div className="flex items-center gap-2">
+              <CheckCircle2 className="w-4 h-4 text-success" />
+              Breach Detection
+            </div>
+            <div className="flex items-center gap-2">
+              <CheckCircle2 className="w-4 h-4 text-success" />
+              SMTP Validation
+            </div>
+            <div className="flex items-center gap-2">
+              <CheckCircle2 className="w-4 h-4 text-success" />
+              Risk Scoring
+            </div>
           </motion.div>
         </div>
       </section>
@@ -313,25 +344,44 @@ export default function Home() {
       <AnimatePresence mode="wait">
         {isScanning && (
           <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: "auto" }}
-            exit={{ opacity: 0, height: 0 }}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
             className="container mx-auto max-w-3xl px-4 pb-20"
           >
-            <Card className="border-primary/20 shadow-lg">
-              <CardContent className="pt-6 space-y-4">
-                <div className="flex justify-between text-sm font-medium text-muted-foreground">
-                  <span>Analyzing reputation...</span>
-                  <span>{Math.round(progress)}%</span>
+            <div className="sc-glass-strong rounded-2xl p-8 space-y-6">
+              <div className="flex justify-between items-center">
+                <div className="flex items-center gap-3">
+                  <motion.div 
+                    animate={{ rotate: 360 }}
+                    transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+                    className="w-8 h-8 rounded-full border-2 border-primary/30 border-t-primary"
+                  />
+                  <div>
+                    <p className="font-semibold">Analyzing email reputation</p>
+                    <p className="text-sm text-muted-foreground">Checking multiple security factors...</p>
+                  </div>
                 </div>
-                <Progress value={progress} className="h-2" />
-                <div className="grid grid-cols-3 gap-4 mt-8">
-                  {[1, 2, 3].map((i) => (
-                    <div key={i} className="h-24 rounded-lg bg-muted/50 animate-pulse" />
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
+                <span className="text-2xl font-bold sc-text-gradient">{Math.round(progress)}%</span>
+              </div>
+              
+              <div className="sc-progress-bar">
+                <motion.div 
+                  className="sc-progress-fill"
+                  initial={{ width: 0 }}
+                  animate={{ width: `${progress}%` }}
+                />
+              </div>
+              
+              <div className="grid grid-cols-3 gap-4">
+                {["Syntax", "Domain", "Reputation"].map((label, i) => (
+                  <div key={i} className="text-center p-4 rounded-xl bg-muted/30">
+                    <div className={`w-8 h-8 mx-auto mb-2 rounded-lg sc-shimmer`} />
+                    <p className="text-xs text-muted-foreground">{label}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
           </motion.div>
         )}
 
@@ -343,43 +393,72 @@ export default function Home() {
           >
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               {/* Main Score Card */}
-              <Card className="lg:col-span-1 border-border shadow-lg overflow-hidden relative">
-                 <div className={`absolute top-0 left-0 w-full h-1.5 ${
-                   result.status === 'safe' ? 'bg-success' : 'bg-destructive'
-                 }`} />
-                <CardHeader>
-                  <CardTitle>Safety Score</CardTitle>
-                  <CardDescription>Overall reputation analysis</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <ScoreGauge score={result.score} status={result.status} />
-                  
-                  <div className="mt-6 space-y-4">
-                    <div className="flex justify-between items-center border-b pb-4">
-                      <span className="text-muted-foreground">Status</span>
-                      <Badge variant={result.status === 'safe' ? 'default' : 'destructive'} className="uppercase">
-                        {result.status}
-                      </Badge>
+              <motion.div 
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: 0.1 }}
+                className={`lg:col-span-1 sc-glass-strong rounded-2xl overflow-hidden relative sc-card-lift ${
+                  result.status === 'safe' ? 'sc-pulse-glow-success' : ''
+                }`}
+              >
+                <div className={`absolute top-0 left-0 w-full h-1 ${
+                  result.status === 'safe' ? 'bg-gradient-to-r from-success to-emerald-400' : 'bg-gradient-to-r from-destructive to-orange-500'
+                }`} />
+                
+                <div className="p-6 space-y-6">
+                  <div className="text-center">
+                    <p className="text-sm font-medium text-muted-foreground mb-4">Trust Score</p>
+                    <div className="relative inline-block">
+                      <div className={`w-36 h-36 rounded-full flex items-center justify-center ${
+                        result.status === 'safe' 
+                          ? 'bg-gradient-to-br from-success/20 to-success/5 ring-4 ring-success/30' 
+                          : 'bg-gradient-to-br from-destructive/20 to-destructive/5 ring-4 ring-destructive/30'
+                      }`}>
+                        <div className="text-center">
+                          <motion.span 
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            className="text-5xl font-bold sc-score-value"
+                          >
+                            {result.score}
+                          </motion.span>
+                          <span className="text-lg text-muted-foreground">/100</span>
+                        </div>
+                      </div>
                     </div>
-                    <div className="flex justify-between items-center border-b pb-4">
-                      <span className="text-muted-foreground">Risk Level</span>
-                      <span className={`font-bold ${
-                        result.riskLevel === 'Low' ? 'text-green-600' : 
-                        result.riskLevel === 'High' ? 'text-red-600' : 'text-yellow-600'
+                  </div>
+                  
+                  <div className="space-y-3">
+                    <div className="flex justify-between items-center py-3 border-b border-border/50">
+                      <span className="text-muted-foreground text-sm">Status</span>
+                      <span className={`sc-pill ${result.status === 'safe' ? 'sc-pill-safe' : 'sc-pill-risky'}`}>
+                        {result.status}
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center py-3">
+                      <span className="text-muted-foreground text-sm">Risk Level</span>
+                      <span className={`font-semibold ${
+                        result.riskLevel === 'Low' ? 'text-success' : 
+                        result.riskLevel === 'High' ? 'text-destructive' : 'text-amber-500'
                       }`}>{result.riskLevel}</span>
                     </div>
                   </div>
-                </CardContent>
-              </Card>
+                </div>
+              </motion.div>
 
 
               {/* Detailed Checks */}
-              <Card className="lg:col-span-2 border-border shadow-lg">
-                <CardHeader>
-                  <CardTitle>Detailed Analysis</CardTitle>
-                  <CardDescription>Technical verification results</CardDescription>
-                </CardHeader>
-                <CardContent className="grid gap-4 md:grid-cols-2">
+              <motion.div 
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: 0.2 }}
+                className="lg:col-span-2 sc-glass-strong rounded-2xl p-6 sc-card-lift"
+              >
+                <div className="mb-6">
+                  <h3 className="text-lg font-semibold">Detailed Analysis</h3>
+                  <p className="text-sm text-muted-foreground">Technical verification results</p>
+                </div>
+                <div className="grid gap-3 md:grid-cols-2">
                   <CheckItem 
                     icon={Mail} 
                     label="Syntax Check" 
@@ -450,37 +529,39 @@ export default function Home() {
                       onClick={() => showExplanation("High Risk Address", ["High Risk"])}
                     />
                   )}
-                </CardContent>
-              </Card>
+                </div>
+              </motion.div>
 
               {/* Data Breaches List */}
               {result.breaches && result.breaches.length > 0 && (
-                <Card className="lg:col-span-3 border-destructive/50 shadow-lg">
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2 text-destructive">
-                      <AlertTriangle className="w-5 h-5" />
-                      Data Breaches ({result.breaches.length})
-                    </CardTitle>
-                    <CardDescription>This email was found in the following data breaches</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="grid gap-2 md:grid-cols-3 lg:grid-cols-4 max-h-64 overflow-y-auto">
-                      {result.breaches.map((breach, index) => (
-                        <div 
-                          key={index}
-                          className="flex items-center justify-between p-3 rounded-lg bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-900"
-                        >
-                          <span className="font-medium text-sm text-red-700 dark:text-red-400 truncate">
-                            {breach.domain}
-                          </span>
-                          <span className="text-xs text-muted-foreground ml-2">
-                            {new Date(breach.date).getFullYear()}
-                          </span>
-                        </div>
-                      ))}
+                <motion.div 
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: 0.3 }}
+                  className="lg:col-span-3 sc-glass-strong rounded-2xl p-6 border border-destructive/20"
+                >
+                  <div className="flex items-center gap-2 mb-4">
+                    <div className="sc-icon-badge-error w-8 h-8 rounded-lg flex items-center justify-center">
+                      <AlertTriangle className="w-4 h-4" />
                     </div>
-                  </CardContent>
-                </Card>
+                    <div>
+                      <h3 className="font-semibold text-destructive">Data Breaches ({result.breaches.length})</h3>
+                      <p className="text-sm text-muted-foreground">This email was found in data breaches</p>
+                    </div>
+                  </div>
+                  <div className="grid gap-2 md:grid-cols-3 lg:grid-cols-4 max-h-48 overflow-y-auto">
+                    {result.breaches.map((breach, index) => (
+                      <div key={index} className="sc-breach-item flex items-center justify-between">
+                        <span className="font-medium text-sm text-destructive truncate">
+                          {breach.domain}
+                        </span>
+                        <span className="text-xs text-muted-foreground ml-2">
+                          {new Date(breach.date).getFullYear()}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </motion.div>
               )}
             </div>
           </motion.div>
@@ -490,39 +571,35 @@ export default function Home() {
       {/* Features Grid (Shown when no result) */}
       {!isScanning && !result && (
         <motion.section 
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.4 }}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.5, duration: 0.6 }}
           className="container mx-auto max-w-5xl px-4 pb-24"
         >
-          <div className="grid md:grid-cols-3 gap-8">
-            <div className="p-6 rounded-xl bg-card border shadow-xs hover:shadow-md transition-shadow">
-              <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center text-primary mb-4">
-                <Shield className="w-6 h-6" />
-              </div>
-              <h3 className="text-xl font-bold mb-2">Real-time Validation</h3>
-              <p className="text-muted-foreground">
-                Connects directly to SMTP servers to verify existence without sending actual emails.
-              </p>
-            </div>
-            <div className="p-6 rounded-xl bg-card border shadow-xs hover:shadow-md transition-shadow">
-              <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center text-primary mb-4">
-                <Trash2 className="w-6 h-6" />
-              </div>
-              <h3 className="text-xl font-bold mb-2">Disposable Detection</h3>
-              <p className="text-muted-foreground">
-                Identifies temporary and burner email addresses to prevent fraud and fake signups.
-              </p>
-            </div>
-            <div className="p-6 rounded-xl bg-card border shadow-xs hover:shadow-md transition-shadow">
-              <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center text-primary mb-4">
-                <Server className="w-6 h-6" />
-              </div>
-              <h3 className="text-xl font-bold mb-2">MX Record Lookup</h3>
-              <p className="text-muted-foreground">
-                Validates the domain's mail exchange records to ensure it can receive messages.
-              </p>
-            </div>
+          <div className="grid md:grid-cols-3 gap-6">
+            {[
+              { icon: Shield, title: "Real-time Validation", desc: "Instantly verify if an email exists without sending messages" },
+              { icon: Trash2, title: "Disposable Detection", desc: "Identify temporary and burner email addresses automatically" },
+              { icon: Server, title: "Breach Monitoring", desc: "Check if the email has appeared in known data breaches" },
+            ].map((feature, i) => (
+              <motion.div 
+                key={i}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.6 + i * 0.1 }}
+                className="sc-feature-card sc-card-lift"
+              >
+                <div className={`w-12 h-12 rounded-xl mb-5 flex items-center justify-center ${
+                  i === 0 ? 'bg-gradient-to-br from-primary/20 to-primary/5 text-primary' :
+                  i === 1 ? 'bg-gradient-to-br from-accent/20 to-accent/5 text-accent' :
+                  'bg-gradient-to-br from-amber-500/20 to-amber-500/5 text-amber-500'
+                }`}>
+                  <feature.icon className="w-6 h-6" />
+                </div>
+                <h3 className="text-lg font-semibold mb-2">{feature.title}</h3>
+                <p className="text-muted-foreground text-sm leading-relaxed">{feature.desc}</p>
+              </motion.div>
+            ))}
           </div>
         </motion.section>
       )}
