@@ -159,7 +159,7 @@ const CheckItem = ({
       <span className="text-sm text-muted-foreground">{value}</span>
       {status === "success" && <CheckCircle2 className="w-4 h-4 text-success" />}
       {status === "error" && <XCircle className="w-4 h-4 text-destructive" />}
-      {status === "warning" && <AlertTriangle className="w-4 h-4 text-amber-500" />}
+      {status === "warning" && <AlertTriangle className="w-4 h-4 text-blue-500" />}
       {status === "neutral" && <AlertTriangle className="w-4 h-4 text-primary" />}
       {hasExplanation && <ChevronRight className="w-4 h-4 text-primary ml-1" />}
     </div>
@@ -402,7 +402,7 @@ export default function Home() {
                 }`}
               >
                 <div className={`absolute top-0 left-0 w-full h-1 ${
-                  result.status === 'safe' ? 'bg-gradient-to-r from-success to-emerald-400' : 'bg-gradient-to-r from-destructive to-orange-500'
+                  result.status === 'safe' ? 'bg-gradient-to-r from-success to-emerald-400' : 'bg-gradient-to-r from-destructive to-red-400'
                 }`} />
                 
                 <div className="p-6 space-y-6">
@@ -439,7 +439,7 @@ export default function Home() {
                       <span className="text-muted-foreground text-sm">Risk Level</span>
                       <span className={`font-semibold ${
                         result.riskLevel === 'Low' ? 'text-success' : 
-                        result.riskLevel === 'High' ? 'text-destructive' : 'text-amber-500'
+                        result.riskLevel === 'High' ? 'text-destructive' : 'text-blue-500'
                       }`}>{result.riskLevel}</span>
                     </div>
                   </div>
@@ -592,7 +592,7 @@ export default function Home() {
                 <div className={`w-12 h-12 rounded-xl mb-5 flex items-center justify-center ${
                   i === 0 ? 'bg-gradient-to-br from-primary/20 to-primary/5 text-primary' :
                   i === 1 ? 'bg-gradient-to-br from-accent/20 to-accent/5 text-accent' :
-                  'bg-gradient-to-br from-amber-500/20 to-amber-500/5 text-amber-500'
+                  'bg-gradient-to-br from-blue-400/20 to-blue-400/5 text-blue-400'
                 }`}>
                   <feature.icon className="w-6 h-6" />
                 </div>
@@ -608,7 +608,7 @@ export default function Home() {
       <Dialog open={explanationOpen} onOpenChange={setExplanationOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 text-orange-600">
+            <DialogTitle className="flex items-center gap-2 text-blue-600">
               <AlertTriangle className="w-5 h-5" />
               {selectedExplanation?.title || "Issue Details"}
             </DialogTitle>
@@ -623,19 +623,19 @@ export default function Home() {
                 className={`flex items-start gap-3 p-4 rounded-lg border ${
                   factor.type === "danger" 
                     ? "bg-red-50 border-red-200 dark:bg-red-950/30 dark:border-red-900" 
-                    : "bg-yellow-50 border-yellow-200 dark:bg-yellow-950/30 dark:border-yellow-900"
+                    : "bg-blue-50 border-blue-200 dark:bg-blue-950/30 dark:border-blue-900"
                 }`}
               >
                 <div className={`p-1.5 rounded-full mt-0.5 ${
                   factor.type === "danger" 
                     ? "bg-red-100 text-red-600 dark:bg-red-900 dark:text-red-400" 
-                    : "bg-yellow-100 text-yellow-600 dark:bg-yellow-900 dark:text-yellow-400"
+                    : "bg-blue-100 text-blue-600 dark:bg-blue-900 dark:text-blue-400"
                 }`}>
                   {factor.type === "danger" ? <XCircle className="w-4 h-4" /> : <AlertTriangle className="w-4 h-4" />}
                 </div>
                 <div>
                   <p className={`font-semibold ${
-                    factor.type === "danger" ? "text-red-700 dark:text-red-400" : "text-yellow-700 dark:text-yellow-400"
+                    factor.type === "danger" ? "text-red-700 dark:text-red-400" : "text-blue-700 dark:text-blue-400"
                   }`}>
                     {factor.label}
                   </p>
