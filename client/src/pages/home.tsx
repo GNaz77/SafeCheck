@@ -268,8 +268,7 @@ export default function Home() {
             </div>
             
             <h1 className="sc-hero-title font-display">
-              Is that email{" "}
-              <span className="sc-text-gradient">actually safe?</span>
+              <span className="sc-text-gradient">SafeCheck</span>
             </h1>
             
             <p className="sc-hero-subtitle text-muted-foreground mx-auto">
