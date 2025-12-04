@@ -168,56 +168,101 @@ function detectRiskFactors(data: any): RiskFactor[] {
   const [username, domain] = email.split('@');
   const domainName = domain?.split('.')[0]?.toLowerCase() || '';
   
+  // Suspicious domain detection
   const suspiciousDomainWord = SUSPICIOUS_DOMAIN_WORDS.find(word => domainName.includes(word));
   if (suspiciousDomainWord) {
     factors.push({
       type: "danger",
       label: "Suspicious Domain",
-      description: `Domain contains "${suspiciousDomainWord}" - commonly used for fake emails`
+      description: `The domain "${domain}" contains "${suspiciousDomainWord}" which is commonly associated with temporary or fake email services. These domains are often used to create throwaway accounts.`
     });
   }
   
+  // Suspicious username patterns
   if (username) {
     const matchedPattern = SUSPICIOUS_USERNAME_PATTERNS.find(p => p.pattern.test(username));
     if (matchedPattern) {
       factors.push({
         type: "warning",
         label: "Suspicious Username",
-        description: matchedPattern.description
+        description: `The username "${username}" matches a common test or placeholder pattern: ${matchedPattern.description}. Real users typically don't use these patterns.`
       });
     }
   }
   
+  // API flagged username
   if (data.email_quality?.is_username_suspicious === true) {
     factors.push({
       type: "warning",
       label: "Username Flagged",
-      description: "Email provider flagged this username as suspicious"
+      description: `The username "${username}" contains unusual character patterns, random strings, or keyboard sequences that are often associated with auto-generated or bot accounts.`
     });
   }
   
+  // High risk address - provide detailed reasoning
   if (data.email_risk?.address_risk_status === "high") {
+    const reasons: string[] = [];
+    
+    // Check what might be causing high risk
+    if (data.email_quality?.score !== undefined && data.email_quality.score < 0.3) {
+      reasons.push("very low quality score from reputation analysis");
+    }
+    if (data.email_deliverability?.status === "unknown") {
+      reasons.push("email deliverability could not be confirmed");
+    }
+    if (data.email_quality?.is_catchall === true) {
+      reasons.push("domain accepts all emails (catch-all), making it impossible to verify if this specific address exists");
+    }
+    if (data.email_quality?.is_free_email === true && data.email_risk?.domain_risk_status === "low") {
+      reasons.push("combination of unverifiable address on a free email provider");
+    }
+    
+    const reasonText = reasons.length > 0 
+      ? `Reasons: ${reasons.join("; ")}.`
+      : "The email reputation service detected patterns associated with spam, fraud, or abuse based on historical data and behavioral analysis.";
+    
     factors.push({
       type: "danger",
       label: "High Risk Address",
-      description: "This email address has been flagged as high risk"
+      description: `This email has been classified as high risk by reputation analysis. ${reasonText}`
     });
   }
   
+  // Data breaches
   const breachCount = data.email_breaches?.total_breaches ?? 0;
   if (breachCount > 0) {
+    const severity = breachCount > 10 ? "significant exposure" : breachCount > 5 ? "moderate exposure" : "some exposure";
     factors.push({
       type: breachCount > 10 ? "danger" : "warning",
       label: "Data Breaches",
-      description: `Found in ${breachCount} known data breach${breachCount > 1 ? 'es' : ''}`
+      description: `This email was found in ${breachCount} known data breach${breachCount > 1 ? 'es' : ''}, indicating ${severity}. Breached emails are often targeted for spam, phishing, and credential stuffing attacks.`
     });
   }
   
+  // Disposable email
   if (data.email_quality?.is_disposable === true) {
     factors.push({
       type: "danger",
       label: "Disposable Email",
-      description: "This is a temporary/disposable email service"
+      description: `This email uses a temporary/disposable email service (${domain}). These addresses self-destruct after a short time and are commonly used to bypass verification, hide identity, or commit fraud.`
+    });
+  }
+  
+  // Role-based email (info@, support@, sales@)
+  if (data.email_quality?.is_role === true) {
+    factors.push({
+      type: "warning",
+      label: "Role-Based Email",
+      description: `This appears to be a role-based email (like info@, support@, sales@) rather than a personal address. Role emails are shared by multiple people and may have higher bounce rates.`
+    });
+  }
+  
+  // Catch-all domain
+  if (data.email_quality?.is_catchall === true && data.email_risk?.address_risk_status !== "high") {
+    factors.push({
+      type: "warning", 
+      label: "Catch-All Domain",
+      description: `The domain ${domain} is configured to accept all emails, even to non-existent addresses. This means we cannot verify if "${username}" is a real mailbox.`
     });
   }
   
