@@ -173,15 +173,36 @@ export default function Home() {
   const [result, setResult] = useState<ScanResult | null>(null);
   const [progress, setProgress] = useState(0);
   const [explanationOpen, setExplanationOpen] = useState(false);
-  const [selectedExplanation, setSelectedExplanation] = useState<{title: string; factors: RiskFactor[]} | null>(null);
+  const [selectedExplanation, setSelectedExplanation] = useState<{title: string; factors: RiskFactor[]; isPositive?: boolean} | null>(null);
 
-  const showExplanation = (title: string, factorLabels: string[]) => {
-    if (!result?.riskFactors) return;
-    const matchingFactors = result.riskFactors.filter(f => 
-      factorLabels.some(label => f.label.toLowerCase().includes(label.toLowerCase()))
-    );
-    if (matchingFactors.length > 0) {
-      setSelectedExplanation({ title, factors: matchingFactors });
+  // Positive explanations for valid results
+  const positiveExplanations: Record<string, RiskFactor> = {
+    "Syntax Check": { label: "Valid Email Format", description: "The email address follows proper formatting rules with a valid username, @ symbol, and domain structure.", type: "success" as any },
+    "Domain Name": { label: "Legitimate Domain", description: "The domain appears to be from a well-established, reputable email provider or organization.", type: "success" as any },
+    "MX Records": { label: "Mail Server Verified", description: "The domain has valid MX (Mail Exchange) records, confirming it can receive emails.", type: "success" as any },
+    "Disposable": { label: "Permanent Email", description: "This is not a disposable or temporary email address. It's a permanent address that can receive ongoing communication.", type: "success" as any },
+    "SMTP Check": { label: "Server Responsive", description: "The mail server responded to verification requests, indicating the email address exists and is active.", type: "success" as any },
+    "Username": { label: "Normal Username", description: "The username portion of the email doesn't contain suspicious patterns like random characters or spam-like sequences.", type: "success" as any },
+    "Domain Age": { label: "Established Domain", description: "The domain has been registered for a significant period of time, which is a positive trust indicator.", type: "success" as any },
+    "Data Breaches": { label: "No Breaches Found", description: "This email address was not found in any known data breach databases.", type: "success" as any },
+  };
+
+  const showExplanation = (title: string, factorLabels: string[], forcePositive?: boolean) => {
+    // Check for risk factors first
+    if (result?.riskFactors && !forcePositive) {
+      const matchingFactors = result.riskFactors.filter(f => 
+        factorLabels.some(label => f.label.toLowerCase().includes(label.toLowerCase()))
+      );
+      if (matchingFactors.length > 0) {
+        setSelectedExplanation({ title, factors: matchingFactors, isPositive: false });
+        setExplanationOpen(true);
+        return;
+      }
+    }
+    // Show positive explanation
+    const positiveExp = positiveExplanations[title];
+    if (positiveExp) {
+      setSelectedExplanation({ title, factors: [positiveExp], isPositive: true });
       setExplanationOpen(true);
     }
   };
@@ -463,48 +484,56 @@ export default function Home() {
                     label="Syntax Check" 
                     status={result.details.syntax ? "success" : "error"} 
                     value={result.details.syntax ? "Valid Format" : "Invalid"} 
+                    hasExplanation={true}
+                    onClick={() => showExplanation("Syntax Check", ["Syntax"], result.details.syntax)}
                   />
                   <CheckItem 
                     icon={Globe} 
                     label="Domain Name" 
                     status={result.riskFactors?.some(f => f.label === "Suspicious Domain") ? "error" : "success"} 
                     value={result.riskFactors?.some(f => f.label === "Suspicious Domain") ? "Suspicious" : "Clean"} 
-                    hasExplanation={result.riskFactors?.some(f => f.label === "Suspicious Domain")}
-                    onClick={() => showExplanation("Domain Name Issue", ["Suspicious Domain"])}
+                    hasExplanation={true}
+                    onClick={() => showExplanation("Domain Name", ["Suspicious Domain"])}
                   />
                   <CheckItem 
                     icon={Server} 
                     label="MX Records" 
                     status={result.details.mxRecords ? "success" : "error"} 
                     value={result.details.mxRecords ? "Found" : "Missing"} 
+                    hasExplanation={true}
+                    onClick={() => showExplanation("MX Records", ["MX"], result.details.mxRecords)}
                   />
                   <CheckItem 
                     icon={Trash2} 
                     label="Disposable" 
                     status={!result.details.disposable ? "success" : "error"} 
                     value={result.details.disposable ? "Yes" : "No"} 
-                    hasExplanation={result.riskFactors?.some(f => f.label === "Disposable Email")}
-                    onClick={() => showExplanation("Disposable Email", ["Disposable"])}
+                    hasExplanation={true}
+                    onClick={() => showExplanation("Disposable", ["Disposable"])}
                   />
                   <CheckItem 
                     icon={Lock} 
                     label="SMTP Check" 
                     status={result.details.smtp ? "success" : (result.details.smtpUnverifiable ? "neutral" : "warning")} 
                     value={result.details.smtp ? "Connected" : (result.details.smtpUnverifiable ? `${result.providerName || "Provider"} blocks verification` : "Unverified")} 
+                    hasExplanation={true}
+                    onClick={() => showExplanation("SMTP Check", ["SMTP"], result.details.smtp)}
                   />
                   <CheckItem 
                     icon={ShieldAlert} 
                     label="Username" 
                     status={result.riskFactors?.some(f => f.label.includes("Username")) ? "error" : "success"} 
                     value={result.riskFactors?.some(f => f.label.includes("Username")) ? "Suspicious" : "Clean"} 
-                    hasExplanation={result.riskFactors?.some(f => f.label.includes("Username"))}
-                    onClick={() => showExplanation("Username Issue", ["Username"])}
+                    hasExplanation={true}
+                    onClick={() => showExplanation("Username", ["Username"])}
                   />
                   <CheckItem 
                     icon={History} 
                     label="Domain Age" 
                     status={result.details.domainAge.includes(">") ? "success" : "warning"} 
                     value={result.details.domainAge} 
+                    hasExplanation={true}
+                    onClick={() => showExplanation("Domain Age", ["Domain Age"], result.details.domainAge.includes(">"))}
                   />
                   <CheckItem 
                     icon={AlertTriangle} 
@@ -513,7 +542,7 @@ export default function Home() {
                     value={result.breaches && result.breaches.length > 0 
                       ? `${result.breaches.length} found` 
                       : "None"} 
-                    hasExplanation={result.riskFactors?.some(f => f.label === "Data Breaches")}
+                    hasExplanation={true}
                     onClick={() => showExplanation("Data Breaches", ["Breach"])}
                   />
                   
@@ -607,12 +636,14 @@ export default function Home() {
       <Dialog open={explanationOpen} onOpenChange={setExplanationOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 text-blue-600">
-              <AlertTriangle className="w-5 h-5" />
-              {selectedExplanation?.title || "Issue Details"}
+            <DialogTitle className={`flex items-center gap-2 ${
+              selectedExplanation?.isPositive ? "text-success" : "text-blue-600"
+            }`}>
+              {selectedExplanation?.isPositive ? <CheckCircle2 className="w-5 h-5" /> : <AlertTriangle className="w-5 h-5" />}
+              {selectedExplanation?.title || "Details"}
             </DialogTitle>
             <DialogDescription>
-              Here's why this was flagged
+              {selectedExplanation?.isPositive ? "Why this passed verification" : "Here's why this was flagged"}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-3 mt-4">
@@ -620,21 +651,33 @@ export default function Home() {
               <div 
                 key={index}
                 className={`flex items-start gap-3 p-4 rounded-lg border ${
-                  factor.type === "danger" 
-                    ? "bg-red-50 border-red-200 dark:bg-red-950/30 dark:border-red-900" 
-                    : "bg-blue-50 border-blue-200 dark:bg-blue-950/30 dark:border-blue-900"
+                  selectedExplanation?.isPositive
+                    ? "bg-green-50 border-green-200 dark:bg-green-950/30 dark:border-green-900"
+                    : factor.type === "danger" 
+                      ? "bg-red-50 border-red-200 dark:bg-red-950/30 dark:border-red-900" 
+                      : "bg-blue-50 border-blue-200 dark:bg-blue-950/30 dark:border-blue-900"
                 }`}
               >
                 <div className={`p-1.5 rounded-full mt-0.5 ${
-                  factor.type === "danger" 
-                    ? "bg-red-100 text-red-600 dark:bg-red-900 dark:text-red-400" 
-                    : "bg-blue-100 text-blue-600 dark:bg-blue-900 dark:text-blue-400"
+                  selectedExplanation?.isPositive
+                    ? "bg-green-100 text-green-600 dark:bg-green-900 dark:text-green-400"
+                    : factor.type === "danger" 
+                      ? "bg-red-100 text-red-600 dark:bg-red-900 dark:text-red-400" 
+                      : "bg-blue-100 text-blue-600 dark:bg-blue-900 dark:text-blue-400"
                 }`}>
-                  {factor.type === "danger" ? <XCircle className="w-4 h-4" /> : <AlertTriangle className="w-4 h-4" />}
+                  {selectedExplanation?.isPositive 
+                    ? <CheckCircle2 className="w-4 h-4" /> 
+                    : factor.type === "danger" 
+                      ? <XCircle className="w-4 h-4" /> 
+                      : <AlertTriangle className="w-4 h-4" />}
                 </div>
                 <div>
                   <p className={`font-semibold ${
-                    factor.type === "danger" ? "text-red-700 dark:text-red-400" : "text-blue-700 dark:text-blue-400"
+                    selectedExplanation?.isPositive
+                      ? "text-green-700 dark:text-green-400"
+                      : factor.type === "danger" 
+                        ? "text-red-700 dark:text-red-400" 
+                        : "text-blue-700 dark:text-blue-400"
                   }`}>
                     {factor.label}
                   </p>
