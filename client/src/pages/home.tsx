@@ -17,7 +17,8 @@ import {
   Trash2,
   History,
   ChevronRight,
-  Lock
+  Lock,
+  Database
 } from "lucide-react";
 import { 
   Card, 
@@ -602,7 +603,7 @@ export default function Home() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.5, duration: 0.6 }}
-          className="container mx-auto max-w-5xl px-4 pb-24"
+          className="container mx-auto max-w-5xl px-4 pb-12"
         >
           <div className="grid md:grid-cols-3 gap-6">
             {[
@@ -631,6 +632,42 @@ export default function Home() {
           </div>
         </motion.section>
       )}
+
+      {/* Data Source Footer */}
+      <footer className="border-t border-border/50 mt-8">
+        <div className="container mx-auto max-w-5xl px-4 py-8">
+          <div className="sc-glass rounded-xl p-6">
+            <h4 className="font-semibold text-sm mb-3 flex items-center gap-2">
+              <Database className="w-4 h-4 text-primary" />
+              Data Sources
+            </h4>
+            <p className="text-sm text-muted-foreground leading-relaxed mb-4">
+              SafeCheck uses real-time threat intelligence from multiple sources to verify email reputation:
+            </p>
+            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3 text-xs">
+              <div className="flex items-start gap-2">
+                <CheckCircle2 className="w-3.5 h-3.5 text-success mt-0.5 shrink-0" />
+                <span className="text-muted-foreground"><strong className="text-foreground">Honeypot Networks</strong> - Real-time spam trap databases</span>
+              </div>
+              <div className="flex items-start gap-2">
+                <CheckCircle2 className="w-3.5 h-3.5 text-success mt-0.5 shrink-0" />
+                <span className="text-muted-foreground"><strong className="text-foreground">Breach Databases</strong> - Known data breach records</span>
+              </div>
+              <div className="flex items-start gap-2">
+                <CheckCircle2 className="w-3.5 h-3.5 text-success mt-0.5 shrink-0" />
+                <span className="text-muted-foreground"><strong className="text-foreground">WHOIS & DNS</strong> - Domain registration data</span>
+              </div>
+              <div className="flex items-start gap-2">
+                <CheckCircle2 className="w-3.5 h-3.5 text-success mt-0.5 shrink-0" />
+                <span className="text-muted-foreground"><strong className="text-foreground">Threat Blocklists</strong> - Industry blacklists</span>
+              </div>
+            </div>
+            <p className="text-xs text-muted-foreground mt-4 pt-4 border-t border-border/50">
+              Powered by <a href="https://www.abstractapi.com/api/email-reputation-api" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">AbstractAPI Email Reputation</a> - Global threat intelligence updated in real-time.
+            </p>
+          </div>
+        </div>
+      </footer>
 
       {/* Explanation Dialog */}
       <Dialog open={explanationOpen} onOpenChange={setExplanationOpen}>
