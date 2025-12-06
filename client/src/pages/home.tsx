@@ -662,9 +662,6 @@ export default function Home() {
                 <span className="text-muted-foreground"><strong className="text-foreground">Threat Blocklists</strong> - Industry blacklists</span>
               </div>
             </div>
-            <p className="text-xs text-muted-foreground mt-4 pt-4 border-t border-border/50">
-              Powered by <a href="https://www.abstractapi.com/api/email-reputation-api" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">AbstractAPI Email Reputation</a> - Global threat intelligence updated in real-time.
-            </p>
           </div>
         </div>
       </footer>
