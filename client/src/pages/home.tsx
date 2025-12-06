@@ -394,12 +394,30 @@ export default function Home() {
                 />
               </div>
               
-              <div className="grid grid-cols-3 gap-4">
-                {["Syntax", "Domain", "Reputation"].map((label, i) => (
-                  <div key={i} className="text-center p-4 rounded-xl bg-muted/30">
-                    <div className={`w-8 h-8 mx-auto mb-2 rounded-lg sc-shimmer`} />
-                    <p className="text-xs text-muted-foreground">{label}</p>
-                  </div>
+              <div className="space-y-2">
+                {["Checking email syntax...", "Verifying domain records...", "Analyzing reputation..."].map((step, i) => (
+                  <motion.div 
+                    key={i}
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: progress > i * 33 ? 1 : 0.4, x: 0 }}
+                    transition={{ delay: i * 0.2 }}
+                    className="flex items-center gap-3 text-sm"
+                  >
+                    {progress > (i + 1) * 33 ? (
+                      <CheckCircle2 className="w-4 h-4 text-success" />
+                    ) : progress > i * 33 ? (
+                      <motion.div 
+                        animate={{ rotate: 360 }}
+                        transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                        className="w-4 h-4 border-2 border-primary/30 border-t-primary rounded-full"
+                      />
+                    ) : (
+                      <div className="w-4 h-4 rounded-full border-2 border-muted-foreground/30" />
+                    )}
+                    <span className={progress > i * 33 ? "text-foreground" : "text-muted-foreground"}>
+                      {step}
+                    </span>
+                  </motion.div>
                 ))}
               </div>
             </div>
