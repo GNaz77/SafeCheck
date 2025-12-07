@@ -18,7 +18,8 @@ import {
   History,
   ChevronRight,
   Lock,
-  Database
+  Database,
+  Info
 } from "lucide-react";
 import { 
   Card, 
@@ -46,7 +47,7 @@ import { PieChart, Pie, Cell, ResponsiveContainer } from "recharts";
 // --- Types & Mock Data ---
 
 type RiskFactor = {
-  type: "warning" | "danger";
+  type: "info" | "warning" | "danger";
   label: string;
   description: string;
 };
@@ -578,6 +579,37 @@ export default function Home() {
                   )}
                 </div>
               </motion.div>
+
+              {/* Score Notes (info-level factors) */}
+              {result.riskFactors && result.riskFactors.filter(f => f.type === "info").length > 0 && (
+                <motion.div 
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: 0.25 }}
+                  className="lg:col-span-3 sc-glass-strong rounded-2xl p-6 border border-blue-200 dark:border-blue-900"
+                >
+                  <div className="flex items-center gap-2 mb-4">
+                    <div className="w-8 h-8 rounded-lg bg-blue-100 dark:bg-blue-900/50 flex items-center justify-center">
+                      <Info className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-blue-700 dark:text-blue-300">Score Notes</h3>
+                      <p className="text-sm text-muted-foreground">Factors affecting the trust score</p>
+                    </div>
+                  </div>
+                  <div className="space-y-3">
+                    {result.riskFactors.filter(f => f.type === "info").map((factor, index) => (
+                      <div key={index} className="flex items-start gap-3 p-3 rounded-lg bg-blue-50 dark:bg-blue-950/30">
+                        <Info className="w-4 h-4 text-blue-500 mt-0.5 shrink-0" />
+                        <div>
+                          <p className="font-medium text-sm text-blue-700 dark:text-blue-300">{factor.label}</p>
+                          <p className="text-sm text-muted-foreground">{factor.description}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </motion.div>
+              )}
 
               {/* Data Breaches List */}
               {result.breaches && result.breaches.length > 0 && (

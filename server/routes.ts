@@ -157,7 +157,7 @@ const SUSPICIOUS_USERNAME_PATTERNS = [
 ];
 
 interface RiskFactor {
-  type: "warning" | "danger";
+  type: "info" | "warning" | "danger";
   label: string;
   description: string;
 }
@@ -263,6 +263,36 @@ function detectRiskFactors(data: any): RiskFactor[] {
       type: "warning", 
       label: "Catch-All Domain",
       description: `The domain ${domain} is configured to accept all emails, even to non-existent addresses. This means we cannot verify if "${username}" is a real mailbox.`
+    });
+  }
+  
+  // INFO-LEVEL FACTORS (explain score reductions without being warnings)
+  
+  // Free email provider
+  if (data.email_quality?.is_free_email === true) {
+    const providerName = data.email_sender?.email_provider_name || domain;
+    factors.push({
+      type: "info",
+      label: "Free Email Provider",
+      description: `This email uses ${providerName}, a free email service. Free providers are less verifiable than business domains, which may slightly reduce the trust score.`
+    });
+  }
+  
+  // SPF not strict
+  if (data.email_quality?.is_spf_strict === false && data.email_quality?.is_dmarc_enforced === true) {
+    factors.push({
+      type: "info",
+      label: "SPF Not Strict",
+      description: `The domain's SPF (Sender Policy Framework) is configured but not in strict mode. This is common for large email providers and has minimal impact on trust.`
+    });
+  }
+  
+  // Medium risk address
+  if (data.email_risk?.address_risk_status === "medium") {
+    factors.push({
+      type: "info",
+      label: "Medium Risk Classification",
+      description: `This email has been classified as medium risk by reputation analysis. This could be due to limited email history, uncommon patterns, or other neutral factors.`
     });
   }
   
