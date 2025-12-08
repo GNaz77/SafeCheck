@@ -328,8 +328,9 @@ function calculateScore(data: any, riskFactors: RiskFactor[], smtpUnverifiable: 
 function determineStatus(score: number, data: any, riskFactors: RiskFactor[]): "safe" | "risky" | "invalid" {
   if (data.email_deliverability?.status === "undeliverable") return "invalid";
   
+  const warningsAndDangers = riskFactors.filter(f => f.type === "warning" || f.type === "danger");
   if (riskFactors.some(f => f.type === "danger")) return "risky";
-  if (riskFactors.length > 1) return "risky";
+  if (warningsAndDangers.length > 1) return "risky";
   
   if (score >= 70) return "safe";
   if (score >= 40) return "risky";
