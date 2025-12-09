@@ -96,6 +96,9 @@ export async function registerRoutes(
         providerName: data.email_sender?.email_provider_name || null,
       };
 
+      res.set('Cache-Control', 'no-store, no-cache, must-revalidate');
+      res.set('Pragma', 'no-cache');
+      console.log("Returning score:", result.score);
       return res.json(result);
     } catch (error) {
       if (error instanceof z.ZodError) {
