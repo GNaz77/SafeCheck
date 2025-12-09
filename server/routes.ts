@@ -312,10 +312,17 @@ function calculateScore(data: any, riskFactors: RiskFactor[], smtpUnverifiable: 
     if (smtpUnverifiable) score += 10;
   }
   
+  // Critical penalties for undeliverable emails
+  if (data.email_deliverability?.is_smtp_valid === false) score -= 25;
+  if (data.email_deliverability?.is_mx_valid === false) score -= 30;
+  if (data.email_deliverability?.status === "undeliverable") score -= 20;
+  if (data.email_deliverability?.status === "unknown") score -= 15;
+  
   if (data.email_quality?.is_catchall === true) score -= 10;
   if (data.email_quality?.is_role === true) score -= 5;
   
   if (data.email_risk?.address_risk_status === "medium") score -= 10;
+  if (data.email_risk?.address_risk_status === "high") score -= 20;
   
   for (const factor of riskFactors) {
     if (factor.type === "danger") score -= 30;
