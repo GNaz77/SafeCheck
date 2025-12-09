@@ -325,7 +325,11 @@ function calculateScore(data: any, riskFactors: RiskFactor[], smtpUnverifiable: 
   if (data.email_risk?.address_risk_status === "high") score -= 20;
   
   for (const factor of riskFactors) {
-    if (factor.type === "danger") score -= 30;
+    if (factor.type === "danger") {
+      // Suspicious domain with "fake", "temp", etc. should be heavily penalized
+      if (factor.label === "Suspicious Domain") score -= 50;
+      else score -= 30;
+    }
     else if (factor.type === "warning") score -= 15;
   }
   
