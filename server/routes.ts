@@ -181,24 +181,24 @@ function detectRiskFactors(data: any): RiskFactor[] {
     });
   }
   
-  // Suspicious username patterns
+  // Suspicious username patterns - info only, no penalty (users can create custom usernames)
   if (username) {
     const matchedPattern = SUSPICIOUS_USERNAME_PATTERNS.find(p => p.pattern.test(username));
     if (matchedPattern) {
       factors.push({
-        type: "warning",
-        label: "Suspicious Username",
-        description: `The username "${username}" matches a common test or placeholder pattern: ${matchedPattern.description}. Real users typically don't use these patterns.`
+        type: "info",
+        label: "Uncommon Username",
+        description: `The username "${username}" matches a pattern sometimes used for test accounts. This is noted for awareness but doesn't affect the trust score since many real users create custom usernames.`
       });
     }
   }
   
-  // API flagged username
+  // API flagged username - info only, no penalty
   if (data.email_quality?.is_username_suspicious === true) {
     factors.push({
-      type: "warning",
-      label: "Username Flagged",
-      description: `The username "${username}" contains unusual character patterns, random strings, or keyboard sequences that are often associated with auto-generated or bot accounts.`
+      type: "info",
+      label: "Unusual Username",
+      description: `The username "${username}" has an unusual pattern. This is noted for awareness but doesn't affect the trust score since users can create any username they want.`
     });
   }
   
