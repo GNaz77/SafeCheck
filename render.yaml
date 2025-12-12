@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: safecheck
+    runtime: node
+    buildCommand: npm install && npm run build
+    startCommand: npm run start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: ABSTRACTAPI_KEY
+        sync: false
+      - key: DATABASE_URL
+        sync: false
